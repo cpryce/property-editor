@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/address.json",
+  "title": "Address",
+  "description": "A mailing/physical address record",
+  "type": "object",
+  "properties": {
+    "nickname": {
+      "description": "Display label used to identify this address in an editing form",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "street": {
+      "type": "object",
+      "title": "Street Address",
+      "properties": {
+        "title": { "type": "string", "const": "Street Address" },
+        "value": { "type": "string" }
+      },
+      "required": ["title", "value"],
+      "additionalProperties": false
+    },
+    "street2": {
+      "type": "object",
+      "title": "Street Address Line 2",
+      "properties": {
+        "title": { "type": "string", "const": "Street Address Line 2" },
+        "value": { "type": "string" }
+      },
+      "required": ["title", "value"],
+      "additionalProperties": false
+    },
+    "city": {
+      "type": "object",
+      "title": "City",
+      "properties": {
+        "title": { "type": "string", "const": "City" },
+        "value": { "type": "string" }
+      },
+      "required": ["title", "value"],
+      "additionalProperties": false
+    },
+    "state": {
+      "type": "object",
+      "title": "State",
+      "properties": {
+        "title": { "type": "string", "const": "State" },
+        "value": {
+          "type": "string",
+          "enum": [
+            "Alabama", "Alaska", "Arizona", "Arkansas", "California",
+            "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
+            "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas",
+            "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts",
+            "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana",
+            "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico",
+            "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma",
+            "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+            "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
+            "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
+            "American Samoa", "Guam", "Northern Mariana Islands",
+            "Puerto Rico", "U.S. Virgin Islands"
+          ]
+        }
+      },
+      "required": ["title", "value"],
+      "additionalProperties": false
+    },
+    "zip": {
+      "type": "object",
+      "title": "Postal Code",
+      "properties": {
+        "title": { "type": "string", "const": "Postal Code" },
+        "value": {
+          "type": "string",
+          "pattern": "^\\d{5}(-\\d{4})?$"
+        }
+      },
+      "required": ["title", "value"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["nickname", "street", "city", "state", "zip"],
+  "additionalProperties": false
+}

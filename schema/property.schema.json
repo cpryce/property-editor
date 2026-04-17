@@ -30,40 +30,6 @@
       "type": "string",
       "minLength": 1
     },
-    "attributes": {
-      "description": "Exactly six ability score attributes: Str, Dex, Con, Int, Wis, Cha",
-      "title": "Attributes",
-      "type": "array",
-      "minItems": 6,
-      "maxItems": 6,
-      "prefixItems": [
-        {
-          "$ref": "#/$defs/attribute",
-          "properties": { "title": { "const": "Str" } }
-        },
-        {
-          "$ref": "#/$defs/attribute",
-          "properties": { "title": { "const": "Dex" } }
-        },
-        {
-          "$ref": "#/$defs/attribute",
-          "properties": { "title": { "const": "Con" } }
-        },
-        {
-          "$ref": "#/$defs/attribute",
-          "properties": { "title": { "const": "Int" } }
-        },
-        {
-          "$ref": "#/$defs/attribute",
-          "properties": { "title": { "const": "Wis" } }
-        },
-        {
-          "$ref": "#/$defs/attribute",
-          "properties": { "title": { "const": "Cha" } }
-        }
-      ],
-      "items": false
-    },
     "createdAt": {
       "description": "Timestamp when the record was created (ISO 8601)",
       "type": "string",
@@ -75,18 +41,6 @@
       "format": "date-time"
     }
   },
-  "required": ["firstName", "lastName", "gender", "characterName", "attributes"],
-  "additionalProperties": false,
-  "$defs": {
-    "attribute": {
-      "type": "object",
-      "properties": {
-        "name":  { "type": "string", "minLength": 1 },
-        "title": { "type": "string", "minLength": 1 },
-        "score": { "type": "integer", "minimum": 0, "default": 10 }
-      },
-      "required": ["name", "title", "score"],
-      "additionalProperties": false
-    }
-  }
+  "required": ["firstName", "lastName", "gender", "characterName"],
+  "additionalProperties": false
 }
