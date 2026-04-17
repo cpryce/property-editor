@@ -1,0 +1,15 @@
+{
+  "name": "property-editor-tests",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "jest --runInBand --forceExit"
+  },
+  "dependencies": {
+    "mongodb-memory-server": "^9.1.1",
+    "mongoose": "^8.2.1",
+    "supertest": "^6.3.4"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
