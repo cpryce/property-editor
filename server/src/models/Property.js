@@ -5,7 +5,9 @@ const propertySchema = new mongoose.Schema(
     firstName:     { type: String, required: true },
     lastName:      { type: String, required: true },
     gender:        { type: String, enum: ['M', 'F'], required: true },
-    characterName: { type: String, required: true },
+    characterName: { type: String },
+    addresses:     { type: [mongoose.Schema.Types.Mixed], default: [] },
+    creditCards:   { type: [mongoose.Schema.Types.Mixed], default: [] },
   },
   { timestamps: true }
 );

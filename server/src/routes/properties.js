@@ -32,8 +32,11 @@ router.get('/:id', async (req, res) => {
 // POST /api/properties — create
 router.post('/', async (req, res) => {
   try {
-    const { firstName, lastName, gender, characterName } = req.body;
-    const property = await Property.create({ firstName, lastName, gender, characterName });
+    const { firstName, lastName, gender, characterName, addresses, creditCards } = req.body;
+    const data = { firstName, lastName, gender, characterName };
+    if (Array.isArray(addresses))   data.addresses   = addresses;
+    if (Array.isArray(creditCards)) data.creditCards = creditCards;
+    const property = await Property.create(data);
     res.status(201).json(property);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -43,10 +46,22 @@ router.post('/', async (req, res) => {
 // PUT /api/properties/:id — update
 router.put('/:id', async (req, res) => {
   try {
-    const { firstName, lastName, gender, characterName } = req.body;
+    const { firstName, lastName, gender, characterName, addresses, creditCards } = req.body;
+    const update = { firstName, lastName, gender };
+    const unset  = {};
+    if (characterName === null || characterName === '') {
+      unset.characterName = '';
+    } else if (characterName !== undefined) {
+      update.characterName = characterName;
+    }
+    if (Array.isArray(addresses))   update.addresses   = addresses;
+    if (Array.isArray(creditCards)) update.creditCards = creditCards;
+    const op = Object.keys(unset).length
+      ? { $set: update, $unset: unset }
+      : update;
     const property = await Property.findByIdAndUpdate(
       req.params.id,
-      { firstName, lastName, gender, characterName },
+      op,
       { new: true, runValidators: true }
     );
     if (!property) return res.status(404).json({ error: 'Not found' });

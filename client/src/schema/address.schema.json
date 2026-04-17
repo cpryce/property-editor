@@ -90,6 +90,7 @@
       "type": "boolean"
     },
     "phones": {
+      "title": "Phones",
       "description": "Phone numbers associated with this address. Exactly one must be designated as the default.",
       "type": "array",
       "minItems": 1,
@@ -113,11 +114,12 @@
   "additionalProperties": false,
   "$defs": {
     "phone": {
+      "title": "Phone",
       "description": "A phone number entry",
       "type": "object",
       "properties": {
         "number": {
-          "description": "Phone number (10\u201315 characters; digits, dashes, spaces, and parentheses only). Accepts formats such as 6127901965, 612-790-1965, or (612) 790-1965.",
+          "description": "Phone number (10-15 characters; digits, dashes, spaces, and parentheses only). Accepts formats such as 6127901965, 612-790-1965, or (612) 790-1965.",
           "type": "string",
           "minLength": 10,
           "maxLength": 15,

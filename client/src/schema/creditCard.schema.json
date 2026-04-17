@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/creditCard.json",
+  "title": "Credit Card",
+  "description": "A credit card record associated with a property",
+  "type": "object",
+  "properties": {
+    "nickname": {
+      "description": "Display label used to identify this card in an editing form",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "cardholderName": {
+      "type": "object",
+      "title": "Cardholder Name",
+      "properties": {
+        "title": { "type": "string", "const": "Cardholder Name" },
+        "value": { "type": "string", "minLength": 1 }
+      },
+      "required": ["title", "value"],
+      "additionalProperties": false
+    },
+    "cardType": {
+      "type": "object",
+      "title": "Card Type",
+      "properties": {
+        "title": { "type": "string", "const": "Card Type" },
+        "value": {
+          "type": "string",
+          "enum": ["Visa", "Mastercard", "American Express", "Discover"]
+        }
+      },
+      "required": ["title", "value"],
+      "additionalProperties": false
+    },
+    "last4": {
+      "type": "object",
+      "title": "Last 4 Digits",
+      "properties": {
+        "title": { "type": "string", "const": "Last 4 Digits" },
+        "value": {
+          "type": "string",
+          "pattern": "^[0-9]{4}$"
+        }
+      },
+      "required": ["title", "value"],
+      "additionalProperties": false
+    },
+    "expirationMonth": {
+      "type": "object",
+      "title": "Expiration Month",
+      "properties": {
+        "title": { "type": "string", "const": "Expiration Month" },
+        "value": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        }
+      },
+      "required": ["title", "value"],
+      "additionalProperties": false
+    },
+    "expirationYear": {
+      "type": "object",
+      "title": "Expiration Year",
+      "properties": {
+        "title": { "type": "string", "const": "Expiration Year" },
+        "value": {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 2100
+        }
+      },
+      "required": ["title", "value"],
+      "additionalProperties": false
+    },
+    "isDefault": {
+      "description": "True for the one card designated as the default for this property record",
+      "type": "boolean"
+    }
+  },
+  "required": ["nickname", "cardholderName", "cardType", "last4", "expirationMonth", "expirationYear", "isDefault"],
+  "additionalProperties": false
+}
