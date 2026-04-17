@@ -32,8 +32,12 @@ router.get('/:id', async (req, res) => {
 // POST /api/properties — create
 router.post('/', async (req, res) => {
   try {
-    const { firstName, lastName, gender, characterName } = req.body;
-    const property = await Property.create({ firstName, lastName, gender, characterName });
+    const { firstName, lastName, gender, characterName, attributes } = req.body;
+    const data = { firstName, lastName, gender, characterName };
+    if (Array.isArray(attributes) && attributes.length === 6) {
+      data.attributes = attributes;
+    }
+    const property = await Property.create(data);
     res.status(201).json(property);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -43,10 +47,14 @@ router.post('/', async (req, res) => {
 // PUT /api/properties/:id — update
 router.put('/:id', async (req, res) => {
   try {
-    const { firstName, lastName, gender, characterName } = req.body;
+    const { firstName, lastName, gender, characterName, attributes } = req.body;
+    const update = { firstName, lastName, gender, characterName };
+    if (Array.isArray(attributes) && attributes.length === 6) {
+      update.attributes = attributes;
+    }
     const property = await Property.findByIdAndUpdate(
       req.params.id,
-      { firstName, lastName, gender, characterName },
+      update,
       { new: true, runValidators: true }
     );
     if (!property) return res.status(404).json({ error: 'Not found' });
@@ -64,6 +72,25 @@ router.delete('/:id', async (req, res) => {
     res.status(204).end();
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/properties/:id/attributes — update attributes only
+router.put('/:id/attributes', async (req, res) => {
+  try {
+    const { attributes } = req.body;
+    if (!Array.isArray(attributes) || attributes.length !== 6) {
+      return res.status(400).json({ error: 'attributes must be an array of exactly 6 items' });
+    }
+    const property = await Property.findByIdAndUpdate(
+      req.params.id,
+      { attributes },
+      { new: true, runValidators: true }
+    );
+    if (!property) return res.status(404).json({ error: 'Not found' });
+    res.json(property);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 

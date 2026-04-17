@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/property.json",
+  "title": "Property",
+  "description": "A property record in the Property Editor application",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Auto-generated unique identifier (MongoDB ObjectId as string)",
+      "type": "string",
+      "pattern": "^[a-f0-9]{24}$"
+    },
+    "firstName": {
+      "description": "First name of the person",
+      "type": "string",
+      "minLength": 1
+    },
+    "lastName": {
+      "description": "Last name of the person",
+      "type": "string",
+      "minLength": 1
+    },
+    "gender": {
+      "description": "Gender of the person",
+      "type": "string",
+      "enum": ["M", "F"]
+    },
+    "characterName": {
+      "description": "Character name associated with the person",
+      "type": "string",
+      "minLength": 1
+    },
+    "attributes": {
+      "description": "Exactly six ability score attributes: Str, Dex, Con, Int, Wis, Cha",
+      "title": "Attributes",
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/attribute",
+          "properties": { "title": { "const": "Str" } }
+        },
+        {
+          "$ref": "#/$defs/attribute",
+          "properties": { "title": { "const": "Dex" } }
+        },
+        {
+          "$ref": "#/$defs/attribute",
+          "properties": { "title": { "const": "Con" } }
+        },
+        {
+          "$ref": "#/$defs/attribute",
+          "properties": { "title": { "const": "Int" } }
+        },
+        {
+          "$ref": "#/$defs/attribute",
+          "properties": { "title": { "const": "Wis" } }
+        },
+        {
+          "$ref": "#/$defs/attribute",
+          "properties": { "title": { "const": "Cha" } }
+        }
+      ],
+      "items": false
+    },
+    "createdAt": {
+      "description": "Timestamp when the record was created (ISO 8601)",
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "description": "Timestamp when the record was last updated (ISO 8601)",
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["firstName", "lastName", "gender", "characterName", "attributes"],
+  "additionalProperties": false,
+  "$defs": {
+    "attribute": {
+      "type": "object",
+      "properties": {
+        "name":  { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "score": { "type": "integer", "minimum": 0, "default": 10 }
+      },
+      "required": ["name", "title", "score"],
+      "additionalProperties": false
+    }
+  }
+}

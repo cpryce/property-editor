@@ -36,3 +36,13 @@ export async function remove(id) {
   const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete property');
 }
+
+export async function updateAttributes(id, attributes) {
+  const res = await fetch(`${BASE}/${id}/attributes`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ attributes }),
+  });
+  if (!res.ok) throw new Error('Failed to update attributes');
+  return res.json();
+}

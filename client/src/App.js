@@ -7,7 +7,7 @@ import PropertyForm from './components/PropertyForm';
 const PAGE_SIZE = 10;
 
 function App() {
-  const [view, setView] = useState('list'); // 'list' | 'new'
+  const [view, setView] = useState('list'); // 'list' | 'new' | 'attributes'
   const [properties, setProperties] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
