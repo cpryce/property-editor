@@ -19,8 +19,9 @@ function PropertyForm({ selected, onSave, onCancel }) {
     setForm((f) => ({ ...f, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    onSave(form);
+  const handleSubmit = async () => {
+    await onSave(form);
+    setForm(EMPTY);
   };
 
   return (
@@ -67,7 +68,7 @@ function PropertyForm({ selected, onSave, onCancel }) {
         <Button type="submit" primary>
           {selected ? 'Update' : 'Create'}
         </Button>
-        <Button type="button" onClick={() => setForm(EMPTY)}>
+        <Button type="button" onClick={() => { setForm(EMPTY); onCancel(); }}>
           Clear
         </Button>
         {selected && (
