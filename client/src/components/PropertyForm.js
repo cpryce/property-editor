@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, Form, Header, Select, Segment } from 'semantic-ui-react';
 
 const EMPTY = { firstName: '', lastName: '', gender: 'M', characterName: '' };
+
+const GENDER_OPTIONS = [
+  { key: 'M', text: 'M', value: 'M' },
+  { key: 'F', text: 'F', value: 'F' },
+];
 
 function PropertyForm({ selected, onSave, onCancel }) {
   const [form, setForm] = useState(EMPTY);
@@ -21,76 +15,68 @@ function PropertyForm({ selected, onSave, onCancel }) {
     setForm(selected ? { ...selected } : EMPTY);
   }, [selected]);
 
-  const handleChange = (e) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const handleChange = (e, { name, value }) => {
+    setForm((f) => ({ ...f, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     onSave(form);
   };
 
   return (
-    <Paper variant="outlined" sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        {selected ? 'Edit Property' : 'New Property'}
-      </Typography>
-      <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={2}>
-          <Stack direction="row" spacing={2}>
-            <TextField
-              label="First Name"
-              name="firstName"
-              value={form.firstName}
-              onChange={handleChange}
-              required
-              fullWidth
-            />
-            <TextField
-              label="Last Name"
-              name="lastName"
-              value={form.lastName}
-              onChange={handleChange}
-              required
-              fullWidth
-            />
-          </Stack>
-          <Stack direction="row" spacing={2}>
-            <FormControl required fullWidth>
-              <InputLabel id="gender-label">Gender</InputLabel>
-              <Select
-                labelId="gender-label"
-                name="gender"
-                value={form.gender}
-                label="Gender"
-                onChange={handleChange}
-              >
-                <MenuItem value="M">M</MenuItem>
-                <MenuItem value="F">F</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              label="Character Name"
-              name="characterName"
-              value={form.characterName}
-              onChange={handleChange}
-              required
-              fullWidth
-            />
-          </Stack>
-          <Stack direction="row" spacing={1}>
-            <Button type="submit" variant="contained">
-              {selected ? 'Update' : 'Create'}
-            </Button>
-            {selected && (
-              <Button variant="outlined" onClick={onCancel}>
-                Cancel
-              </Button>
-            )}
-          </Stack>
-        </Stack>
-      </Box>
-    </Paper>
+    <Segment>
+      <Header as="h3">{selected ? 'Edit Property' : 'New Property'}</Header>
+      <Form onSubmit={handleSubmit}>
+        <Form.Group widths="equal">
+          <Form.Input
+            label="First Name"
+            name="firstName"
+            value={form.firstName}
+            onChange={handleChange}
+            placeholder="First Name"
+            required
+          />
+          <Form.Input
+            label="Last Name"
+            name="lastName"
+            value={form.lastName}
+            onChange={handleChange}
+            placeholder="Last Name"
+            required
+          />
+        </Form.Group>
+        <Form.Group widths="equal">
+          <Form.Field
+            control={Select}
+            label="Gender"
+            name="gender"
+            options={GENDER_OPTIONS}
+            value={form.gender}
+            onChange={handleChange}
+            required
+          />
+          <Form.Input
+            label="Character Name"
+            name="characterName"
+            value={form.characterName}
+            onChange={handleChange}
+            placeholder="Character Name"
+            required
+          />
+        </Form.Group>
+        <Button type="submit" primary>
+          {selected ? 'Update' : 'Create'}
+        </Button>
+        <Button type="button" onClick={() => setForm(EMPTY)}>
+          Clear
+        </Button>
+        {selected && (
+          <Button type="button" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+      </Form>
+    </Segment>
   );
 }
 

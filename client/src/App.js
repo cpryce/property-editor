@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  AppBar,
-  Box,
-  Container,
-  CssBaseline,
-  Snackbar,
-  Alert,
-  Toolbar,
-  Typography,
-} from '@mui/material';
+import { Container, Menu, Message } from 'semantic-ui-react';
 import * as api from './api';
 import PropertyTable from './components/PropertyTable';
 import PropertyForm from './components/PropertyForm';
@@ -56,38 +47,27 @@ function App() {
 
   return (
     <>
-      <CssBaseline />
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div">
-            Property Editor
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Menu inverted fixed="top">
+        <Menu.Item header>Property Editor</Menu.Item>
+      </Menu>
+      <Container style={{ marginTop: '5rem', marginBottom: '2rem' }}>
+        {error && (
+          <Message negative onDismiss={() => setError(null)}>
+            <Message.Header>Error</Message.Header>
+            <p>{error}</p>
+          </Message>
+        )}
         <PropertyForm
           selected={selected}
           onSave={handleSave}
           onCancel={() => setSelected(null)}
         />
-        <Box sx={{ mt: 4 }}>
-          <PropertyTable
-            properties={properties}
-            onEdit={setSelected}
-            onDelete={handleDelete}
-          />
-        </Box>
+        <PropertyTable
+          properties={properties}
+          onEdit={setSelected}
+          onDelete={handleDelete}
+        />
       </Container>
-      <Snackbar
-        open={!!error}
-        autoHideDuration={4000}
-        onClose={() => setError(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="error" onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      </Snackbar>
     </>
   );
 }

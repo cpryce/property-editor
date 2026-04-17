@@ -1,68 +1,45 @@
 import React from 'react';
-import {
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
+import { Button, Icon, Message, Table } from 'semantic-ui-react';
 
 function PropertyTable({ properties, onEdit, onDelete }) {
   if (!properties.length) {
-    return (
-      <Typography variant="body1" color="text.secondary">
-        No properties yet.
-      </Typography>
-    );
+    return <Message info content="No properties yet." />;
   }
 
   return (
-    <TableContainer component={Paper} variant="outlined">
-      <Table size="small">
-        <TableHead>
-          <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-            <TableCell>ID</TableCell>
-            <TableCell>First Name</TableCell>
-            <TableCell>Last Name</TableCell>
-            <TableCell>Gender</TableCell>
-            <TableCell>Character Name</TableCell>
-            <TableCell align="center">Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {properties.map((p) => (
-            <TableRow key={p.id} hover>
-              <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
-                {p.id}
-              </TableCell>
-              <TableCell>{p.firstName}</TableCell>
-              <TableCell>{p.lastName}</TableCell>
-              <TableCell>{p.gender}</TableCell>
-              <TableCell>{p.characterName}</TableCell>
-              <TableCell align="center">
-                <Tooltip title="Edit">
-                  <IconButton size="small" onClick={() => onEdit(p)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete">
-                  <IconButton size="small" color="error" onClick={() => onDelete(p.id)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <Table celled striped>
+      <Table.Header>
+        <Table.Row>
+          <Table.HeaderCell>ID</Table.HeaderCell>
+          <Table.HeaderCell>First Name</Table.HeaderCell>
+          <Table.HeaderCell>Last Name</Table.HeaderCell>
+          <Table.HeaderCell>Gender</Table.HeaderCell>
+          <Table.HeaderCell>Character Name</Table.HeaderCell>
+          <Table.HeaderCell textAlign="center">Actions</Table.HeaderCell>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {properties.map((p) => (
+          <Table.Row key={p.id}>
+            <Table.Cell style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#888' }}>
+              {p.id}
+            </Table.Cell>
+            <Table.Cell>{p.firstName}</Table.Cell>
+            <Table.Cell>{p.lastName}</Table.Cell>
+            <Table.Cell>{p.gender}</Table.Cell>
+            <Table.Cell>{p.characterName}</Table.Cell>
+            <Table.Cell textAlign="center">
+              <Button icon size="tiny" onClick={() => onEdit(p)} title="Edit">
+                <Icon name="edit" />
+              </Button>
+              <Button icon size="tiny" color="red" onClick={() => onDelete(p.id)} title="Delete">
+                <Icon name="trash" />
+              </Button>
+            </Table.Cell>
+          </Table.Row>
+        ))}
+      </Table.Body>
+    </Table>
   );
 }
 
