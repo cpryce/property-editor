@@ -1,9 +1,9 @@
 const BASE = '/api/properties';
 
-export async function getAll() {
-  const res = await fetch(BASE);
+export async function getAll({ page = 1, limit = 10 } = {}) {
+  const res = await fetch(`${BASE}?page=${page}&limit=${limit}`);
   if (!res.ok) throw new Error('Failed to fetch properties');
-  return res.json();
+  return res.json(); // { properties, total, page, limit }
 }
 
 export async function getOne(id) {

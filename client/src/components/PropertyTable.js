@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Icon, Message, Table } from 'semantic-ui-react';
 
 function PropertyTable({ properties, onEdit, onDelete }) {
-  if (!properties.length) {
+  if (!properties || !properties.length) {
     return <Message info content="No properties yet." />;
   }
 

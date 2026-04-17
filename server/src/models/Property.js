@@ -6,7 +6,8 @@ const propertySchema = new mongoose.Schema(
     lastName: { type: String, required: true },
     gender: { type: String, enum: ['M', 'F'], required: true },
     characterName: { type: String, required: true },
-  }
+  },
+  { timestamps: true }
 );
 
 propertySchema.set('toJSON', {

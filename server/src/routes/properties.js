@@ -2,11 +2,17 @@ const express = require('express');
 const router = express.Router();
 const Property = require('../models/Property');
 
-// GET /api/properties — list all
+// GET /api/properties — list with pagination, sorted by updatedAt desc
 router.get('/', async (req, res) => {
   try {
-    const properties = await Property.find();
-    res.json(properties);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit) || 10);
+    const skip = (page - 1) * limit;
+    const [properties, total] = await Promise.all([
+      Property.find().sort({ updatedAt: -1 }).skip(skip).limit(limit),
+      Property.countDocuments(),
+    ]);
+    res.json({ properties, total, page, limit });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
