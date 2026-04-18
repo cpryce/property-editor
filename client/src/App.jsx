@@ -3,21 +3,22 @@ import * as api from './api';
 import ListView from './components/ListView';
 import PropertyForm from './components/PropertyForm';
 
-const PAGE_SIZE = 10;
+const ALL_SENTINEL = 10000; // 'All' — large enough to fetch every record
 
 function App() {
   const [view, setView] = useState('list'); // 'list' | 'new'
   const [properties, setProperties] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [sortBy, setSortBy] = useState('updatedAt');
   const [sortDir, setSortDir] = useState('desc');
   const [selected, setSelected] = useState(null);
   const [error, setError] = useState(null);
 
-  const load = useCallback(async (p = page, sb = sortBy, sd = sortDir) => {
+  const load = useCallback(async (p = page, sb = sortBy, sd = sortDir, lim = limit) => {
     try {
-      const data = await api.getAll({ page: p, limit: PAGE_SIZE, sortBy: sb, sortDir: sd });
+      const data = await api.getAll({ page: p, limit: lim, sortBy: sb, sortDir: sd });
       // handle both paginated response and legacy plain array
       if (Array.isArray(data)) {
         setProperties(data);
@@ -30,20 +31,26 @@ function App() {
     } catch (e) {
       setError(e.message);
     }
-  }, [page, sortBy, sortDir]);
+  }, [page, sortBy, sortDir, limit]);
 
   useEffect(() => {
     if (view === 'list') load(page);
   }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePageChange = (newPage) => {
-    load(newPage, sortBy, sortDir);
+    load(newPage, sortBy, sortDir, limit);
   };
 
   const handleSortChange = (field, dir) => {
     setSortBy(field);
     setSortDir(dir);
-    load(1, field, dir);
+    load(1, field, dir, limit);
+  };
+
+  const handleLimitChange = (newLimit) => {
+    setLimit(newLimit);
+    setPage(1);
+    load(1, sortBy, sortDir, newLimit);
   };
 
   const handleEdit = (property) => {
@@ -129,13 +136,15 @@ function App() {
             properties={properties}
             total={total}
             page={page}
-            limit={PAGE_SIZE}
+            limit={limit}
+            allSentinel={ALL_SENTINEL}
             sortBy={sortBy}
             sortDir={sortDir}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onPageChange={handlePageChange}
             onSortChange={handleSortChange}
+            onLimitChange={handleLimitChange}
           />
         )}
       </main>
