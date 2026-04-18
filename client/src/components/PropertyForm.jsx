@@ -1,28 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControlLabel,
-  IconButton,
-  MenuItem,
-  Paper,
-  Stack,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-  TextField,
-  Typography,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import propertySchema from '../schema/property.schema.json';
 import addressSchema  from '../schema/address.schema.json';
@@ -255,6 +231,10 @@ function validateDataAgainstSchema(data, schema, contextSchema, pathLabel = sche
     }
   }
 
+  if (pathLabel === (schema?.title ?? 'Form')) {
+    // Only log at the top-level call to avoid noise from recursive calls
+  }
+
   return errors;
 }
 
@@ -405,21 +385,25 @@ function SchemaField({ fieldKey, propDef, value, onChange, onBlur, isRequired, e
   // ── Boolean ────────────────────────────────────────────────────────────────
   if (kind === 'boolean') {
     const label = fieldKey === 'isDefault' ? 'Default' : (propDef.title ?? fieldKey);
+    const id = `toggle-${fieldKey}`;
     return (
-      <Box>
-        <FormControlLabel
-          control={(
-            <Switch
+      <div>
+        <label className="gh-toggle" htmlFor={id}>
+          <input
+            id={id}
+            type="checkbox"
+            role="switch"
+            aria-label={label}
             checked={!!value}
             onBlur={onBlur}
             onChange={(e) => onChange(e.target.checked)}
-            />
-          )}
-          label={label}
-          sx={{ alignItems: 'center', m: 0 }}
-        />
-        {hasError && <Typography variant="caption" color="error">{errorText}</Typography>}
-      </Box>
+          />
+          <span className="gh-toggle-track" />
+          <span className="gh-toggle-thumb" style={{ position: 'relative', left: 'auto', transform: 'none', display: 'none' }} />
+          <span style={{ fontSize: 'var(--font-size-base)' }}>{label}</span>
+        </label>
+        {hasError && <p className="gh-caption-error">{errorText}</p>}
+      </div>
     );
   }
 
@@ -429,41 +413,53 @@ function SchemaField({ fieldKey, propDef, value, onChange, onBlur, isRequired, e
     if (propDef.enum) {
       const currentValue = value ?? propDef.enum[0] ?? '';
       return (
-        <TextField
-          select
-          fullWidth
-          label={label}
-          value={currentValue}
-          onBlur={onBlur}
-          onChange={(e) => onChange(e.target.value)}
-          error={hasError}
-          helperText={errorText || ' '}
-          required={isRequired}
-        >
-          {propDef.enum.map((enumValue) => (
-            <MenuItem key={String(enumValue)} value={enumValue}>{String(enumValue)}</MenuItem>
-          ))}
-        </TextField>
+        <div>
+          <label className="gh-label" htmlFor={`field-${fieldKey}`}>
+            {label}{isRequired && <span style={{ color: 'var(--color-danger-fg)' }}> *</span>}
+          </label>
+          <div className="gh-select">
+            <select
+              id={`field-${fieldKey}`}
+              value={currentValue}
+              onBlur={onBlur}
+              onChange={(e) => onChange(e.target.value)}
+              className={hasError ? 'gh-input-error' : ''}
+            >
+              {propDef.enum.map((enumValue) => (
+                <option key={String(enumValue)} value={enumValue}>{String(enumValue)}</option>
+              ))}
+            </select>
+          </div>
+          <p className={hasError ? 'gh-caption-error' : 'gh-caption'} style={{ minHeight: '18px' }}>
+            {hasError ? errorText : ''}
+          </p>
+        </div>
       );
     }
     const isNum = propDef.type === 'integer' || propDef.type === 'number';
     return (
-      <TextField
-        fullWidth
-        label={label}
-        type={isNum ? 'number' : 'text'}
-        value={value ?? ''}
-        placeholder={label}
-        slotProps={{ htmlInput: { min: propDef.minimum, max: propDef.maximum } }}
-        onBlur={onBlur}
-        onChange={(e) => {
-          const raw = e.target.value;
-          onChange(isNum ? (raw === '' ? '' : Number(raw)) : raw);
-        }}
-        error={hasError}
-        helperText={errorText || ' '}
-        required={isRequired}
-      />
+      <div>
+        <label className="gh-label" htmlFor={`field-${fieldKey}`}>
+          {label}{isRequired && <span style={{ color: 'var(--color-danger-fg)' }}> *</span>}
+        </label>
+        <input
+          id={`field-${fieldKey}`}
+          className={`gh-input${hasError ? ' gh-input-error' : ''}`}
+          type={isNum ? 'number' : 'text'}
+          value={value ?? ''}
+          placeholder={label}
+          min={propDef.minimum}
+          max={propDef.maximum}
+          onBlur={onBlur}
+          onChange={(e) => {
+            const raw = e.target.value;
+            onChange(isNum ? (raw === '' ? '' : Number(raw)) : raw);
+          }}
+        />
+        <p className={hasError ? 'gh-caption-error' : 'gh-caption'} style={{ minHeight: '18px' }}>
+          {hasError ? errorText : ''}
+        </p>
+      </div>
     );
   }
 
@@ -477,42 +473,54 @@ function SchemaField({ fieldKey, propDef, value, onChange, onBlur, isRequired, e
     if (valSchema.enum) {
       const currentValue = currentVal ?? valSchema.enum[0] ?? '';
       return (
-        <TextField
-          select
-          fullWidth
-          label={label}
-          value={currentValue}
-          onBlur={onBlur}
-          onChange={(e) => onChange({ title: titleConst, value: e.target.value })}
-          error={hasError}
-          helperText={errorText || ' '}
-          required={isRequired}
-        >
-          {valSchema.enum.map((enumValue) => (
-            <MenuItem key={String(enumValue)} value={enumValue}>{String(enumValue)}</MenuItem>
-          ))}
-        </TextField>
+        <div>
+          <label className="gh-label" htmlFor={`field-${fieldKey}`}>
+            {label}{isRequired && <span style={{ color: 'var(--color-danger-fg)' }}> *</span>}
+          </label>
+          <div className="gh-select">
+            <select
+              id={`field-${fieldKey}`}
+              value={currentValue}
+              onBlur={onBlur}
+              onChange={(e) => onChange({ title: titleConst, value: e.target.value })}
+              className={hasError ? 'gh-input-error' : ''}
+            >
+              {valSchema.enum.map((enumValue) => (
+                <option key={String(enumValue)} value={enumValue}>{String(enumValue)}</option>
+              ))}
+            </select>
+          </div>
+          <p className={hasError ? 'gh-caption-error' : 'gh-caption'} style={{ minHeight: '18px' }}>
+            {hasError ? errorText : ''}
+          </p>
+        </div>
       );
     }
 
     const isNum = valSchema.type === 'integer' || valSchema.type === 'number';
     return (
-      <TextField
-        fullWidth
-        label={label}
-        type={isNum ? 'number' : 'text'}
-        value={currentVal}
-        placeholder={label}
-        slotProps={{ htmlInput: { min: valSchema.minimum, max: valSchema.maximum } }}
-        onBlur={onBlur}
-        onChange={(e) => {
-          const raw = e.target.value;
-          onChange({ title: titleConst, value: isNum ? (raw === '' ? '' : Number(raw)) : raw });
-        }}
-        error={hasError}
-        helperText={errorText || ' '}
-        required={isRequired}
-      />
+      <div>
+        <label className="gh-label" htmlFor={`field-${fieldKey}`}>
+          {label}{isRequired && <span style={{ color: 'var(--color-danger-fg)' }}> *</span>}
+        </label>
+        <input
+          id={`field-${fieldKey}`}
+          className={`gh-input${hasError ? ' gh-input-error' : ''}`}
+          type={isNum ? 'number' : 'text'}
+          value={currentVal}
+          placeholder={label}
+          min={valSchema.minimum}
+          max={valSchema.maximum}
+          onBlur={onBlur}
+          onChange={(e) => {
+            const raw = e.target.value;
+            onChange({ title: titleConst, value: isNum ? (raw === '' ? '' : Number(raw)) : raw });
+          }}
+        />
+        <p className={hasError ? 'gh-caption-error' : 'gh-caption'} style={{ minHeight: '18px' }}>
+          {hasError ? errorText : ''}
+        </p>
+      </div>
     );
   }
 
@@ -554,6 +562,8 @@ function PropertyForm({ selected, onSave, onCancel }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [touchedFields, setTouchedFields] = useState({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const toastTimerRef = useRef(null);
 
   // Load selected record
   useEffect(() => {
@@ -728,6 +738,9 @@ function PropertyForm({ selected, onSave, onCancel }) {
     const payload = flattenForApi(rootData, propertySchema, propertySchema);
     await onSave(payload);
     setSubmitAttempted(false);
+    clearTimeout(toastTimerRef.current);
+    setToastVisible(true);
+    toastTimerRef.current = setTimeout(() => setToastVisible(false), 3000);
   };
 
   // Global cancel/clear — same action: reset and close
@@ -756,7 +769,7 @@ function PropertyForm({ selected, onSave, onCancel }) {
     }
 
     return (
-      <Stack component="form" spacing={1} onSubmit={(e) => e.preventDefault()}>
+      <form style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} onSubmit={(e) => e.preventDefault()}>
         {fields.map(({ key, propDef }) => (
           <SchemaField
             key={key}
@@ -771,39 +784,33 @@ function PropertyForm({ selected, onSave, onCancel }) {
         ))}
 
         {arrayNavs.length > 0 && (
-          <Stack spacing={1} sx={{ mt: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
             {arrayNavs.map(({ key, propDef }) => {
               const iSchema = resolveItemSchema(propDef, current.contextSchema);
               const label   = propDef.title ?? iSchema?.title ?? key;
               const count   = Array.isArray(currentData?.[key]) ? currentData[key].length : 0;
               return (
-                <Paper
+                <div
                   key={key}
-                  variant="outlined"
+                  className="gh-card"
                   role="button"
                   tabIndex={0}
                   onClick={() => handleNavigateIntoArray(key, propDef)}
                   onKeyDown={(e) => e.key === 'Enter' && handleNavigateIntoArray(key, propDef)}
-                  sx={{
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    p: 2,
-                  }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', cursor: 'pointer' }}
                 >
-                  <Typography fontWeight={600}>{label}</Typography>
-                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                    <Chip label={count} size="small" />
-                    <Typography variant="body2" color="text.secondary">&gt;</Typography>
-                  </Stack>
-                </Paper>
+                  <span style={{ fontWeight: 600 }}>{label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="gh-badge">{count}</span>
+                    <span style={{ color: 'var(--color-fg-muted)' }}>›</span>
+                  </div>
+                </div>
               );
             })}
-          </Stack>
+          </div>
         )}
 
-      </Stack>
+      </form>
     );
   };
 
@@ -813,52 +820,52 @@ function PropertyForm({ selected, onSave, onCancel }) {
     const iSchema = resolveItemSchema(current.schema, current.contextSchema);
     const arr     = Array.isArray(currentData) ? currentData : [];
     const addBtn  = (
-      <Button type="button" variant="contained" size="small" onClick={handleAddItem}>
+      <button type="button" className="btn btn-sm btn-default" onClick={handleAddItem}>
         Add {iSchema?.title ?? 'Item'}
-      </Button>
+      </button>
     );
 
     if (arr.length === 0) {
       return (
-        <>
-          <Alert severity="info">No {current.label.toLowerCase()} yet.</Alert>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="gh-alert gh-alert-info">No {current.label.toLowerCase()} yet.</div>
           {addBtn}
-        </>
+        </div>
       );
     }
 
     return (
-      <Stack spacing={2}>
-        <TableContainer component={Paper} variant="outlined">
-          <Table>
-            <TableBody>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="gh-card overflow-hidden">
+          <table className="gh-table">
+            <tbody>
             {arr.map((item, i) => (
-              <TableRow
-                hover
+              <tr
                 key={i}
                 onClick={() => handleNavigateToItem(i)}
+                style={{ cursor: 'pointer' }}
               >
-                <TableCell>
+                <td>
                   <strong>{itemDisplayLabel(item, iSchema, i)}</strong>
                   {item?.isDefault && (
-                    <Chip label="Default" size="small" color="primary" sx={{ ml: 1 }} />
+                    <span className="gh-badge gh-badge-accent" style={{ marginLeft: '8px' }}>Default</span>
                   )}
-                </TableCell>
-                <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                  <Button type="button" size="small" onClick={() => handleNavigateToItem(i)}>
+                </td>
+                <td style={{ textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
+                  <button type="button" className="btn btn-sm btn-default" style={{ marginRight: '6px' }} onClick={() => handleNavigateToItem(i)}>
                     Edit
-                  </Button>
-                  <Button type="button" color="error" size="small" onClick={() => handleDeleteItem(i)}>
+                  </button>
+                  <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDeleteItem(i)}>
                     Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
+                  </button>
+                </td>
+              </tr>
             ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            </tbody>
+          </table>
+        </div>
         {addBtn}
-      </Stack>
+      </div>
     );
   };
 
@@ -869,49 +876,99 @@ function PropertyForm({ selected, onSave, onCancel }) {
   // ── Main render ────────────────────────────────────────────────────────────
 
   return (
-    <Paper variant="outlined" sx={{ p: 3 }}>
+    <div className="gh-card" style={{ padding: '24px' }}>
+      {/* Save toast */}
+      {toastVisible && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 16px',
+            borderRadius: '6px',
+            background: 'var(--color-success-subtle, #dafbe1)',
+            border: '1px solid var(--color-success-muted, #4ac26b)',
+            color: 'var(--color-success-fg, #1a7f37)',
+            fontSize: 'var(--font-size-sm)',
+            fontWeight: 500,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          }}
+        >
+          <span style={{ fontSize: '16px' }}>&#10003;</span>
+          Saved successfully
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => setToastVisible(false)}
+            style={{ marginLeft: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '14px', lineHeight: 1, padding: 0 }}
+          >
+            &#x2715;
+          </button>
+        </div>
+      )}
       {/* Navigation header */}
-      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 3 }}>
-        <IconButton
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <button
+          type="button"
+          className="btn btn-sm btn-default"
           aria-label="Go back"
           onClick={handleBack}
-          size="small"
-          color="primary"
+          style={{ padding: '4px 8px', fontSize: '16px', lineHeight: 1 }}
         >
-          <ArrowBackIcon />
-        </IconButton>
-        <Box>
-          <Typography variant="h6">{current.label}</Typography>
+          ←
+        </button>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 'var(--font-size-xl)', fontWeight: 600 }}>{current.label}</h2>
           {navStack.length > 1 && (
-            <Typography variant="body2" color="text.secondary">{breadcrumb}</Typography>
+            <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-muted)' }}>{breadcrumb}</p>
           )}
-        </Box>
-      </Stack>
+        </div>
+      </div>
 
       {/* Content */}
       {current.isArray ? renderArrayManager() : renderObjectForm()}
 
       {/* Single global action footer */}
-      <Stack direction="row" spacing={2} sx={{ borderTop: 1, borderColor: 'divider', mt: 3, pt: 2 }}>
-        <Button type="button" variant="contained" onClick={handleGlobalSave}>
-          {selected ? 'Update' : 'Create'}
-        </Button>
-        <Button type="button" variant="outlined" onClick={handleGlobalCancel}>Cancel</Button>
-      </Stack>
+      <div style={{ borderTop: '1px solid var(--color-border-default)', marginTop: '20px', paddingTop: '16px' }}>
+        {submitAttempted && validationErrors.length > 0 && (
+          <div className="gh-alert gh-alert-error" style={{ marginBottom: '12px' }}>
+            <strong>Please fix the following errors before saving:</strong>
+            <ul style={{ margin: '6px 0 0 0', paddingLeft: '20px' }}>
+              {validationErrors.map((err, i) => (
+                <li key={i}>{err}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button type="button" className="btn btn-primary" onClick={handleGlobalSave}>
+            {selected ? 'Update' : 'Create'}
+          </button>
+          <button type="button" className="btn btn-default" onClick={handleGlobalCancel}>Cancel</button>
+        </div>
+      </div>
 
-      {/* Unsaved-changes dialog (shown when pressing Back with dirty data) */}
-      <Dialog open={confirmOpen} maxWidth="sm" fullWidth>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
-          This level has unsaved changes. Do you want to keep or discard them?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleConfirmCancel}>Stay</Button>
-          <Button color="error" onClick={handleConfirmDiscard}>Discard Changes</Button>
-          <Button variant="contained" onClick={handleConfirmKeep}>Keep Changes</Button>
-        </DialogActions>
-      </Dialog>
-    </Paper>
+      {/* Unsaved-changes dialog */}
+      {confirmOpen && (
+        <div className="gh-dialog-backdrop" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+          <div className="gh-dialog">
+            <h3 id="dialog-title" className="gh-dialog-title">Unsaved Changes</h3>
+            <p className="gh-dialog-body">This level has unsaved changes. Do you want to keep or discard them?</p>
+            <div className="gh-dialog-actions">
+              <button type="button" className="btn btn-default" onClick={handleConfirmCancel}>Stay</button>
+              <button type="button" className="btn btn-danger" onClick={handleConfirmDiscard}>Discard Changes</button>
+              <button type="button" className="btn btn-primary" onClick={handleConfirmKeep}>Keep Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
