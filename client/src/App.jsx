@@ -1,12 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Alert,
-  AppBar,
-  Box,
-  Button,
-  Container,
-  Toolbar,
-} from '@mui/material';
 import * as api from './api';
 import ListView from './components/ListView';
 import PropertyForm from './components/PropertyForm';
@@ -88,23 +80,35 @@ function App() {
   };
 
   return (
-    <Box>
-      <AppBar position="fixed">
-        <Toolbar sx={{ gap: 1.5 }}>
-          <Box sx={{ flexGrow: 1, fontWeight: 700 }}>Property Editor</Box>
-          <Button color="inherit" variant={view === 'new' ? 'outlined' : 'text'} onClick={handleNavNew}>
-            New
-          </Button>
-          <Button color="inherit" variant={view === 'list' ? 'outlined' : 'text'} onClick={handleNavList}>
-            List
-          </Button>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="lg" sx={{ py: 4, mt: 8 }}>
+    <div>
+      {/* GitHub-style top nav */}
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-4 h-12"
+        style={{ background: '#24292f', borderBottom: '1px solid #444c56' }}>
+        <span className="font-semibold text-white flex-1" style={{ fontSize: 'var(--font-size-base)' }}>
+          Property Editor
+        </span>
+        <button
+          className={`btn btn-sm ${view === 'new' ? 'btn-primary' : 'btn-default'}`}
+          style={view !== 'new' ? { background: 'transparent', borderColor: '#6e7681', color: '#cdd9e5' } : {}}
+          onClick={handleNavNew}
+        >
+          New
+        </button>
+        <button
+          className={`btn btn-sm ${view === 'list' ? 'btn-primary' : 'btn-default'}`}
+          style={view !== 'list' ? { background: 'transparent', borderColor: '#6e7681', color: '#cdd9e5' } : {}}
+          onClick={handleNavList}
+        >
+          List
+        </button>
+      </header>
+
+      <main className="max-w-screen-lg mx-auto px-4 py-6" style={{ marginTop: '56px' }}>
         {error && (
-          <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3 }}>
-            {error}
-          </Alert>
+          <div className="gh-alert gh-alert-error mb-4" role="alert">
+            <span style={{ flex: 1 }}>{error}</span>
+            <button className="btn-invisible btn" onClick={() => setError(null)} aria-label="Dismiss error">✕</button>
+          </div>
         )}
         {view === 'new' ? (
           <PropertyForm
@@ -123,8 +127,8 @@ function App() {
             onPageChange={handlePageChange}
           />
         )}
-      </Container>
-    </Box>
+      </main>
+    </div>
   );
 }
 

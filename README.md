@@ -60,7 +60,25 @@ Client runs on **http://localhost:3000** and proxies API calls to the server.
 
 ---
 
-## 5. Run Tests
+## 5. Seed the Database (optional)
+
+Inserts 15 mock property records — each with one address and one credit card — into the running MongoDB instance.
+
+> **Requires** MongoDB to be running (see step 1) and server dependencies to be installed (see step 2).
+
+```bash
+cd tests && node seed.js
+```
+
+To use a different database, set the `MONGO_URI` environment variable:
+
+```bash
+MONGO_URI=mongodb://localhost:27017/my-db node seed.js
+```
+
+---
+
+## 6. Run Tests
 
 ```bash
 cd tests && npm test
