@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Alert,
   Box,
@@ -536,6 +536,7 @@ function SchemaField({ fieldKey, propDef, value, onChange, onBlur, isRequired, e
  */
 function PropertyForm({ selected, onSave, onCancel }) {
   const makeEmpty = () => buildEmpty(propertySchema);
+  const previousSelectedIdRef = useRef(selected?.id ?? null);
 
   const rootEntry = (data) => ({
     label:           propertySchema.title ?? 'Property',
@@ -558,10 +559,23 @@ function PropertyForm({ selected, onSave, onCancel }) {
   useEffect(() => {
     const raw     = selected ? { ...makeEmpty(), ...selected } : makeEmpty();
     const initial = selected ? normalizeFromDb(raw, propertySchema, propertySchema) : raw;
+    const nextSelectedId = selected?.id ?? null;
+    const shouldResetNavigation = previousSelectedIdRef.current !== nextSelectedId;
+
     setRootData(initial);
-    setNavStack([rootEntry(initial)]);
+    setNavStack((prev) => {
+      if (shouldResetNavigation || prev.length === 0) {
+        return [rootEntry(initial)];
+      }
+
+      return prev.map((entry) => ({
+        ...entry,
+        snapshotOnEnter: JSON.parse(JSON.stringify(getAtPath(initial, entry.dataPath))),
+      }));
+    });
     setTouchedFields({});
     setSubmitAttempted(false);
+    previousSelectedIdRef.current = nextSelectedId;
   }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const current = navStack[navStack.length - 1];
@@ -597,7 +611,10 @@ function PropertyForm({ selected, onSave, onCancel }) {
   };
 
   const handleBack = () => {
-    if (isRoot) return;
+    if (isRoot) {
+      onCancel();
+      return;
+    }
     if (isDirty) {
       setConfirmOpen(true);
     } else {
@@ -708,12 +725,8 @@ function PropertyForm({ selected, onSave, onCancel }) {
       markCurrentFieldsTouched();
       return;
     }
-    const empty   = makeEmpty();
     const payload = flattenForApi(rootData, propertySchema, propertySchema);
     await onSave(payload);
-    setRootData(empty);
-    setNavStack([rootEntry(empty)]);
-    setTouchedFields({});
     setSubmitAttempted(false);
   };
 
@@ -861,7 +874,6 @@ function PropertyForm({ selected, onSave, onCancel }) {
       <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 3 }}>
         <IconButton
           aria-label="Go back"
-          disabled={isRoot}
           onClick={handleBack}
           size="small"
           color="primary"

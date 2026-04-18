@@ -1,8 +1,24 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import App from './App';
 import PropertyForm from './components/PropertyForm';
+
+jest.mock('./api', () => ({
+  getAll: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  remove: jest.fn(),
+}));
+
+const api = require('./api');
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  api.getAll.mockResolvedValue({ properties: [], total: 0, page: 1, limit: 10 });
+});
 
 test('shows validation only after touch and blocks invalid save', async () => {
   const onSave = jest.fn().mockResolvedValue(undefined);
+  const onCancel = jest.fn();
   const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
   render(
@@ -16,7 +32,7 @@ test('shows validation only after touch and blocks invalid save', async () => {
         creditCards: [],
       }}
       onSave={onSave}
-      onCancel={() => {}}
+      onCancel={onCancel}
     />
   );
 
@@ -45,6 +61,9 @@ test('shows validation only after touch and blocks invalid save', async () => {
   await waitFor(() => {
     expect(onSave).toHaveBeenCalledTimes(1);
   });
+
+  expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
+  expect(onCancel).not.toHaveBeenCalled();
 
   expect(errorSpy).not.toHaveBeenCalled();
   errorSpy.mockRestore();
@@ -108,4 +127,101 @@ test('only keeps one default item selected per collection', async () => {
       expect.objectContaining({ nickname: 'Office', isDefault: true }),
     ]),
   }));
+});
+
+test('root back button returns to table view', () => {
+  const onCancel = jest.fn();
+
+  render(
+    <PropertyForm
+      selected={null}
+      onSave={jest.fn()}
+      onCancel={onCancel}
+    />
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Go back' }));
+
+  expect(onCancel).toHaveBeenCalledTimes(1);
+});
+
+test('update keeps the user on the current form', async () => {
+  api.getAll.mockResolvedValue({
+    properties: [{
+      id: '507f1f77bcf86cd799439011',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      gender: 'F',
+      addresses: [{
+        nickname: 'Home',
+        type: 'shipping',
+        street: '123 Main St',
+        city: 'Austin',
+        state: 'Texas',
+        zip: '78701',
+        isDefault: true,
+        phones: [],
+      }],
+      creditCards: [],
+    }],
+    total: 1,
+    page: 1,
+    limit: 10,
+  });
+  api.update.mockResolvedValue({
+    id: '507f1f77bcf86cd799439011',
+    firstName: 'Ada',
+    lastName: 'Lovelace',
+    gender: 'F',
+    addresses: [{
+      nickname: 'Home',
+      type: 'shipping',
+      street: '999 Saved St',
+      city: 'Austin',
+      state: 'Texas',
+      zip: '78701',
+      isDefault: true,
+      phones: [],
+    }],
+    creditCards: [],
+  });
+
+  render(<App />);
+
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: 'Delete Ada Lovelace' })).toBeInTheDocument();
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Ada' }));
+
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: /Addresses 1/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+
+  await waitFor(() => {
+    expect(screen.getByDisplayValue('123 Main St')).toBeInTheDocument();
+  });
+
+  fireEvent.change(screen.getByDisplayValue('123 Main St'), { target: { value: '999 Saved St' } });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Update' }));
+
+  await waitFor(() => {
+    expect(api.update).toHaveBeenCalledTimes(1);
+  });
+
+  expect(api.update).toHaveBeenCalledWith(
+    '507f1f77bcf86cd799439011',
+    expect.objectContaining({
+      addresses: expect.arrayContaining([
+        expect.objectContaining({ street: '999 Saved St' }),
+      ]),
+    })
+  );
+
+  expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
+  expect(screen.getByDisplayValue('999 Saved St')).toBeInTheDocument();
 });

@@ -54,13 +54,14 @@ function App() {
   const handleSave = async (form) => {
     try {
       if (selected) {
-        await api.update(selected.id, form);
+        const updated = await api.update(selected.id, form);
+        setSelected(updated);
       } else {
         await api.create(form);
+        setSelected(null);
+        setView('list');
+        await load(1);
       }
-      setSelected(null);
-      setView('list');
-      await load(1);
     } catch (e) {
       setError(e.message);
       throw e; // let the form know save failed so it doesn't clear
