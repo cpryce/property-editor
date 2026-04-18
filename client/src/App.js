@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Menu, Message } from 'semantic-ui-react';
+import {
+  Alert,
+  AppBar,
+  Box,
+  Button,
+  Container,
+  Toolbar,
+} from '@mui/material';
 import * as api from './api';
 import ListView from './components/ListView';
 import PropertyForm from './components/PropertyForm';
@@ -80,18 +87,23 @@ function App() {
   };
 
   return (
-    <>
-      <Menu inverted fixed="top">
-        <Menu.Item header>Property Editor</Menu.Item>
-        <Menu.Item active={view === 'new'} onClick={handleNavNew}>New</Menu.Item>
-        <Menu.Item active={view === 'list'} onClick={handleNavList}>List</Menu.Item>
-      </Menu>
-      <Container className="app-shell">
+    <Box>
+      <AppBar position="fixed">
+        <Toolbar sx={{ gap: 1.5 }}>
+          <Box sx={{ flexGrow: 1, fontWeight: 700 }}>Property Editor</Box>
+          <Button color="inherit" variant={view === 'new' ? 'outlined' : 'text'} onClick={handleNavNew}>
+            New
+          </Button>
+          <Button color="inherit" variant={view === 'list' ? 'outlined' : 'text'} onClick={handleNavList}>
+            List
+          </Button>
+        </Toolbar>
+      </AppBar>
+      <Container maxWidth="lg" sx={{ py: 4, mt: 8 }}>
         {error && (
-          <Message negative onDismiss={() => setError(null)}>
-            <Message.Header>Error</Message.Header>
-            <p>{error}</p>
-          </Message>
+          <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3 }}>
+            {error}
+          </Alert>
         )}
         {view === 'new' ? (
           <PropertyForm
@@ -111,7 +123,7 @@ function App() {
           />
         )}
       </Container>
-    </>
+    </Box>
   );
 }
 

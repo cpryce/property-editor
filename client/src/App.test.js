@@ -3,6 +3,7 @@ import PropertyForm from './components/PropertyForm';
 
 test('shows validation only after touch and blocks invalid save', async () => {
   const onSave = jest.fn().mockResolvedValue(undefined);
+  const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
   render(
     <PropertyForm
@@ -44,4 +45,7 @@ test('shows validation only after touch and blocks invalid save', async () => {
   await waitFor(() => {
     expect(onSave).toHaveBeenCalledTimes(1);
   });
+
+  expect(errorSpy).not.toHaveBeenCalled();
+  errorSpy.mockRestore();
 });

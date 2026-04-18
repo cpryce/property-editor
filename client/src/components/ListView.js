@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pagination } from 'semantic-ui-react';
+import { Box, Pagination } from '@mui/material';
 import PropertyTable from './PropertyTable';
 
 function ListView({ properties, total, page, limit, onEdit, onDelete, onPageChange }) {
@@ -13,16 +13,16 @@ function ListView({ properties, total, page, limit, onEdit, onDelete, onPageChan
         onDelete={onDelete}
       />
       {totalPages > 1 && (
-        <div className="list-view-pagination">
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
           <Pagination
-            activePage={page}
+            color="primary"
+            page={page}
             totalPages={totalPages}
-            onPageChange={(_, { activePage }) => onPageChange(activePage)}
-            boundaryRange={1}
-            siblingRange={1}
-            ellipsisItem={null}
+            onChange={(_, activePage) => onPageChange(activePage)}
+            boundaryCount={1}
+            siblingCount={1}
           />
-        </div>
+        </Box>
       )}
     </>
   );

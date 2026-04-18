@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
-import { Message } from 'semantic-ui-react';
+import {
+  Alert,
+  Button,
+  Link,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 
 function PropertyTable({ properties, onEdit, onDelete }) {
   const [selectedId, setSelectedId] = useState(null);
 
   if (!properties || !properties.length) {
-    return <Message info content="No properties yet." />;
+    return <Alert severity="info">No properties yet.</Alert>;
   }
 
   const handleRowClick = (p) => {
@@ -13,57 +24,67 @@ function PropertyTable({ properties, onEdit, onDelete }) {
   };
 
   return (
-    <table className="property-table">
-      <thead className="property-table-head">
-        <tr>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>Gender</th>
-          <th>Character Name</th>
-          <th>Last Modified</th>
-          <th className="property-table-actions-header">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
+    <TableContainer component={Paper} variant="outlined">
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>First Name</TableCell>
+            <TableCell>Last Name</TableCell>
+            <TableCell>Gender</TableCell>
+            <TableCell>Character Name</TableCell>
+            <TableCell>Last Modified</TableCell>
+            <TableCell align="center">Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
         {properties.map((p) => (
-          <tr
+          <TableRow
+            hover
             key={p.id}
-            aria-selected={selectedId === p.id}
+            selected={selectedId === p.id}
             onClick={() => handleRowClick(p)}
-            className={selectedId === p.id ? 'property-table-row property-table-row--active' : 'property-table-row'}
           >
-            <td className="property-table-cell">
-              <span className="property-table-edit-text" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.firstName}</span>
-            </td>
-            <td className="property-table-cell">
-              <span className="property-table-edit-text" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.lastName}</span>
-            </td>
-            <td className="property-table-cell">
-              <span className="property-table-edit-text" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.gender}</span>
-            </td>
-            <td className="property-table-cell">
-              <span className="property-table-edit-text" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.characterName}</span>
-            </td>
-            <td className="property-table-cell property-table-cell--timestamp">
-              <span className="property-table-edit-text" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
+            <TableCell>
+              <Link component="button" type="button" underline="hover" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
+                {p.firstName}
+              </Link>
+            </TableCell>
+            <TableCell>
+              <Link component="button" type="button" underline="hover" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
+                {p.lastName}
+              </Link>
+            </TableCell>
+            <TableCell>
+              <Link component="button" type="button" underline="hover" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
+                {p.gender}
+              </Link>
+            </TableCell>
+            <TableCell>
+              <Link component="button" type="button" underline="hover" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
+                {p.characterName}
+              </Link>
+            </TableCell>
+            <TableCell sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+              <Link component="button" type="button" underline="hover" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
                 {p.updatedAt || p.createdAt ? new Date(p.updatedAt || p.createdAt).toLocaleString() : '—'}
-              </span>
-            </td>
-            <td className="property-table-actions-cell" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                className="property-table-delete-button"
+              </Link>
+            </TableCell>
+            <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+              <Button
+                color="error"
+                size="small"
+                variant="outlined"
                 onClick={() => onDelete(p.id)}
                 aria-label={`Delete ${p.firstName} ${p.lastName}`.trim()}
-                title="Delete"
               >
                 Delete
-              </button>
-            </td>
-          </tr>
+              </Button>
+            </TableCell>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 

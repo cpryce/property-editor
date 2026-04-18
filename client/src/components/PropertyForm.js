@@ -1,8 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Button, Checkbox, Form, Header, Icon,
-  Input, Label, Modal, Segment, Select, Table, Message,
-} from 'semantic-ui-react';
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  IconButton,
+  MenuItem,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  TextField,
+  Typography,
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import propertySchema from '../schema/property.schema.json';
 import addressSchema  from '../schema/address.schema.json';
@@ -282,10 +302,6 @@ function getFieldPathKey(path, key) {
   return [...path, key].join('.');
 }
 
-function getNavigationButtonClassName(isRoot) {
-  return isRoot ? 'property-form-back-button property-form-back-button--disabled' : 'property-form-back-button';
-}
-
 /**
  * Inverse of normalizeFromDb. Walks the data against a schema and unwraps
  * { title, value } objects back to plain scalar values so the server's flat
@@ -382,17 +398,17 @@ function SchemaField({ fieldKey, propDef, value, onChange, onBlur, isRequired, e
   // ── Boolean ────────────────────────────────────────────────────────────────
   if (kind === 'boolean') {
     return (
-      <Form.Field required={isRequired} error={hasError}>
-        <label>{propDef.title ?? fieldKey}</label>
-        <Checkbox
-          toggle
-          label={value ? 'Yes' : 'No'}
-          checked={!!value}
-          onBlur={onBlur}
-          onChange={(_, { checked }) => onChange(checked)}
-        />
-        {hasError && <div className="property-form-field-error">{errorText}</div>}
-      </Form.Field>
+      <FormControlLabel
+        control={(
+          <Checkbox
+            checked={!!value}
+            onBlur={onBlur}
+            onChange={(e) => onChange(e.target.checked)}
+          />
+        )}
+        label={value ? 'Yes' : 'No'}
+        sx={{ alignItems: 'center', m: 0 }}
+      />
     );
   }
 
@@ -400,39 +416,43 @@ function SchemaField({ fieldKey, propDef, value, onChange, onBlur, isRequired, e
   if (kind === 'scalar') {
     const label = propDef.title ?? fieldKey;
     if (propDef.enum) {
-      const opts = propDef.enum.map((v) => ({ key: String(v), text: String(v), value: v }));
+      const currentValue = value ?? propDef.enum[0] ?? '';
       return (
-        <Form.Field required={isRequired} error={hasError}>
-          <label>{label}</label>
-          <Select
-            fluid
-            options={opts}
-            value={value ?? opts[0]?.value}
-            onBlur={onBlur}
-            onChange={(_, { value: v }) => onChange(v)}
-            placeholder={`Select ${label}`}
-          />
-          {hasError && <div className="property-form-field-error">{errorText}</div>}
-        </Form.Field>
+        <TextField
+          select
+          fullWidth
+          label={label}
+          value={currentValue}
+          onBlur={onBlur}
+          onChange={(e) => onChange(e.target.value)}
+          error={hasError}
+          helperText={errorText || ' '}
+          required={isRequired}
+        >
+          {propDef.enum.map((enumValue) => (
+            <MenuItem key={String(enumValue)} value={enumValue}>{String(enumValue)}</MenuItem>
+          ))}
+        </TextField>
       );
     }
     const isNum = propDef.type === 'integer' || propDef.type === 'number';
     return (
-      <Form.Field required={isRequired} error={hasError}>
-        <label>{label}</label>
-        <Input
-          fluid
-          type={isNum ? 'number' : 'text'}
-          value={value ?? ''}
-          min={propDef.minimum}
-          max={propDef.maximum}
-          placeholder={label}
-          error={hasError}
-          onBlur={onBlur}
-          onChange={(e) => onChange(isNum ? Number(e.target.value) : e.target.value)}
-        />
-        {hasError && <div className="property-form-field-error">{errorText}</div>}
-      </Form.Field>
+      <TextField
+        fullWidth
+        label={label}
+        type={isNum ? 'number' : 'text'}
+        value={value ?? ''}
+        placeholder={label}
+        slotProps={{ htmlInput: { min: propDef.minimum, max: propDef.maximum } }}
+        onBlur={onBlur}
+        onChange={(e) => {
+          const raw = e.target.value;
+          onChange(isNum ? (raw === '' ? '' : Number(raw)) : raw);
+        }}
+        error={hasError}
+        helperText={errorText || ' '}
+        required={isRequired}
+      />
     );
   }
 
@@ -444,43 +464,44 @@ function SchemaField({ fieldKey, propDef, value, onChange, onBlur, isRequired, e
     const currentVal = value?.value ?? defaultForSchema(valSchema);
 
     if (valSchema.enum) {
-      const opts = valSchema.enum.map((v) => ({ key: String(v), text: String(v), value: v }));
+      const currentValue = currentVal ?? valSchema.enum[0] ?? '';
       return (
-        <Form.Field required={isRequired} error={hasError}>
-          <label>{label}</label>
-          <Select
-            fluid
-            options={opts}
-            value={currentVal}
-            onBlur={onBlur}
-            onChange={(_, { value: v }) => onChange({ title: titleConst, value: v })}
-            placeholder={`Select ${label}`}
-          />
-          {hasError && <div className="property-form-field-error">{errorText}</div>}
-        </Form.Field>
+        <TextField
+          select
+          fullWidth
+          label={label}
+          value={currentValue}
+          onBlur={onBlur}
+          onChange={(e) => onChange({ title: titleConst, value: e.target.value })}
+          error={hasError}
+          helperText={errorText || ' '}
+          required={isRequired}
+        >
+          {valSchema.enum.map((enumValue) => (
+            <MenuItem key={String(enumValue)} value={enumValue}>{String(enumValue)}</MenuItem>
+          ))}
+        </TextField>
       );
     }
 
     const isNum = valSchema.type === 'integer' || valSchema.type === 'number';
     return (
-      <Form.Field required={isRequired} error={hasError}>
-        <label>{label}</label>
-        <Input
-          fluid
-          type={isNum ? 'number' : 'text'}
-          value={currentVal}
-          min={valSchema.minimum}
-          max={valSchema.maximum}
-          placeholder={label}
-          error={hasError}
-          onBlur={onBlur}
-          onChange={(e) => {
-            const raw = e.target.value;
-            onChange({ title: titleConst, value: isNum ? Number(raw) : raw });
-          }}
-        />
-        {hasError && <div className="property-form-field-error">{errorText}</div>}
-      </Form.Field>
+      <TextField
+        fullWidth
+        label={label}
+        type={isNum ? 'number' : 'text'}
+        value={currentVal}
+        placeholder={label}
+        slotProps={{ htmlInput: { min: valSchema.minimum, max: valSchema.maximum } }}
+        onBlur={onBlur}
+        onChange={(e) => {
+          const raw = e.target.value;
+          onChange({ title: titleConst, value: isNum ? (raw === '' ? '' : Number(raw)) : raw });
+        }}
+        error={hasError}
+        helperText={errorText || ' '}
+        required={isRequired}
+      />
     );
   }
 
@@ -702,7 +723,7 @@ function PropertyForm({ selected, onSave, onCancel }) {
     }
 
     return (
-      <Form>
+      <Stack component="form" spacing={1} onSubmit={(e) => e.preventDefault()}>
         {fields.map(({ key, propDef }) => (
           <SchemaField
             key={key}
@@ -717,32 +738,39 @@ function PropertyForm({ selected, onSave, onCancel }) {
         ))}
 
         {arrayNavs.length > 0 && (
-          <div className="property-form-array-nav-list">
+          <Stack spacing={1} sx={{ mt: 1 }}>
             {arrayNavs.map(({ key, propDef }) => {
               const iSchema = resolveItemSchema(propDef, current.contextSchema);
               const label   = propDef.title ?? iSchema?.title ?? key;
               const count   = Array.isArray(currentData?.[key]) ? currentData[key].length : 0;
               return (
-                <div
+                <Paper
                   key={key}
-                  className="property-form-array-nav"
+                  variant="outlined"
                   role="button"
                   tabIndex={0}
                   onClick={() => handleNavigateIntoArray(key, propDef)}
                   onKeyDown={(e) => e.key === 'Enter' && handleNavigateIntoArray(key, propDef)}
+                  sx={{
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    p: 2,
+                  }}
                 >
-                  <span className="property-form-array-nav-label">{label}</span>
-                  <span>
-                    <Label circular size="small">{count}</Label>
-                    <Icon name="chevron right" className="property-form-array-nav-icon" />
-                  </span>
-                </div>
+                  <Typography fontWeight={600}>{label}</Typography>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                    <Chip label={count} size="small" />
+                    <Typography variant="body2" color="text.secondary">&gt;</Typography>
+                  </Stack>
+                </Paper>
               );
             })}
-          </div>
+          </Stack>
         )}
 
-      </Form>
+      </Stack>
     );
   };
 
@@ -752,8 +780,7 @@ function PropertyForm({ selected, onSave, onCancel }) {
     const iSchema = resolveItemSchema(current.schema, current.contextSchema);
     const arr     = Array.isArray(currentData) ? currentData : [];
     const addBtn  = (
-      <Button primary size="small" icon labelPosition="left" onClick={handleAddItem} className="property-form-add-button">
-        <Icon name="plus" />
+      <Button type="button" variant="contained" size="small" onClick={handleAddItem}>
         Add {iSchema?.title ?? 'Item'}
       </Button>
     );
@@ -761,38 +788,44 @@ function PropertyForm({ selected, onSave, onCancel }) {
     if (arr.length === 0) {
       return (
         <>
-          <Message info content={`No ${current.label.toLowerCase()} yet.`} />
+          <Alert severity="info">No {current.label.toLowerCase()} yet.</Alert>
           {addBtn}
         </>
       );
     }
 
     return (
-      <>
-        <Table celled compact selectable>
-          <Table.Body>
+      <Stack spacing={2}>
+        <TableContainer component={Paper} variant="outlined">
+          <Table>
+            <TableBody>
             {arr.map((item, i) => (
-              <Table.Row
+              <TableRow
+                hover
                 key={i}
-                className="property-form-array-row"
                 onClick={() => handleNavigateToItem(i)}
               >
-                <Table.Cell>
+                <TableCell>
                   <strong>{itemDisplayLabel(item, iSchema, i)}</strong>
                   {item?.isDefault && (
-                    <Label size="tiny" color="blue" className="property-form-default-label">Default</Label>
+                    <Chip label="Default" size="small" color="primary" sx={{ ml: 1 }} />
                   )}
-                </Table.Cell>
-                <Table.Cell collapsing onClick={(e) => e.stopPropagation()}>
-                  <Button icon="pencil" size="tiny" basic title="Edit"   onClick={() => handleNavigateToItem(i)} />
-                  <Button icon="trash"  size="tiny" basic color="red" title="Delete" onClick={() => handleDeleteItem(i)} />
-                </Table.Cell>
-              </Table.Row>
+                </TableCell>
+                <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                  <Button type="button" size="small" onClick={() => handleNavigateToItem(i)}>
+                    Edit
+                  </Button>
+                  <Button type="button" color="error" size="small" onClick={() => handleDeleteItem(i)}>
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
             ))}
-          </Table.Body>
-        </Table>
+            </TableBody>
+          </Table>
+        </TableContainer>
         {addBtn}
-      </>
+      </Stack>
     );
   };
 
@@ -803,50 +836,50 @@ function PropertyForm({ selected, onSave, onCancel }) {
   // ── Main render ────────────────────────────────────────────────────────────
 
   return (
-    <Segment>
+    <Paper variant="outlined" sx={{ p: 3 }}>
       {/* Navigation header */}
-      <div className="property-form-header">
-        <Button
-          icon="arrow left"
-          size="small"
-          basic
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 3 }}>
+        <IconButton
+          aria-label="Go back"
           disabled={isRoot}
-          title="Go back"
           onClick={handleBack}
-          className={getNavigationButtonClassName(isRoot)}
-        />
-        <div>
-          <Header as="h3" className="property-form-title">{current.label}</Header>
+          size="small"
+          color="primary"
+        >
+          <ArrowBackIcon />
+        </IconButton>
+        <Box>
+          <Typography variant="h6">{current.label}</Typography>
           {navStack.length > 1 && (
-            <small className="property-form-breadcrumb">{breadcrumb}</small>
+            <Typography variant="body2" color="text.secondary">{breadcrumb}</Typography>
           )}
-        </div>
-      </div>
+        </Box>
+      </Stack>
 
       {/* Content */}
       {current.isArray ? renderArrayManager() : renderObjectForm()}
 
       {/* Single global action footer */}
-      <div className="property-form-footer">
-        <Button primary onClick={handleGlobalSave}>
+      <Stack direction="row" spacing={2} sx={{ borderTop: 1, borderColor: 'divider', mt: 3, pt: 2 }}>
+        <Button type="button" variant="contained" onClick={handleGlobalSave}>
           {selected ? 'Update' : 'Create'}
         </Button>
-        <Button onClick={handleGlobalCancel}>Cancel</Button>
-      </div>
+        <Button type="button" variant="outlined" onClick={handleGlobalCancel}>Cancel</Button>
+      </Stack>
 
       {/* Unsaved-changes dialog (shown when pressing Back with dirty data) */}
-      <Modal open={confirmOpen} size="small">
-        <Modal.Header>Unsaved Changes</Modal.Header>
-        <Modal.Content>
+      <Dialog open={confirmOpen} maxWidth="sm" fullWidth>
+        <DialogTitle>Unsaved Changes</DialogTitle>
+        <DialogContent>
           This level has unsaved changes. Do you want to keep or discard them?
-        </Modal.Content>
-        <Modal.Actions>
+        </DialogContent>
+        <DialogActions>
           <Button onClick={handleConfirmCancel}>Stay</Button>
-          <Button color="red"  onClick={handleConfirmDiscard}>Discard Changes</Button>
-          <Button color="blue" onClick={handleConfirmKeep}>Keep Changes</Button>
-        </Modal.Actions>
-      </Modal>
-    </Segment>
+          <Button color="error" onClick={handleConfirmDiscard}>Discard Changes</Button>
+          <Button variant="contained" onClick={handleConfirmKeep}>Keep Changes</Button>
+        </DialogActions>
+      </Dialog>
+    </Paper>
   );
 }
 
