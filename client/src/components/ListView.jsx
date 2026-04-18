@@ -1,15 +1,18 @@
 import React from 'react';
 import PropertyTable from './PropertyTable';
 
-function ListView({ properties, total, page, limit, onEdit, onDelete, onPageChange }) {
+function ListView({ properties, total, page, limit, sortBy, sortDir, onEdit, onDelete, onPageChange, onSortChange }) {
   const totalPages = Math.ceil(total / limit);
 
   return (
     <>
       <PropertyTable
         properties={properties}
+        sortBy={sortBy}
+        sortDir={sortDir}
         onEdit={onEdit}
         onDelete={onDelete}
+        onSortChange={onSortChange}
       />
       {totalPages > 1 && (
         <div className="flex justify-center mt-6">

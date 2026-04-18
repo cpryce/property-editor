@@ -1,7 +1,32 @@
 import React, { useState } from 'react';
 
-function PropertyTable({ properties, onEdit, onDelete }) {
+const COLUMNS = [
+  { label: 'First Name',     field: 'firstName' },
+  { label: 'Last Name',      field: 'lastName' },
+  { label: 'Gender',         field: 'gender' },
+  { label: 'Character Name', field: 'characterName' },
+  { label: 'Last Modified',  field: 'updatedAt' },
+];
+
+function SortIcon({ active, dir }) {
+  if (!active) return <span aria-hidden="true" style={{ marginLeft: '4px', opacity: 0.3 }}>⇅</span>;
+  return (
+    <span aria-hidden="true" style={{ marginLeft: '4px' }}>
+      {dir === 'asc' ? '↑' : '↓'}
+    </span>
+  );
+}
+
+function PropertyTable({ properties, sortBy, sortDir, onEdit, onDelete, onSortChange }) {
   const [selectedId, setSelectedId] = useState(null);
+
+  const handleColumnClick = (field) => {
+    if (sortBy === field) {
+      onSortChange(field, sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      onSortChange(field, 'asc');
+    }
+  };
 
   if (!properties || !properties.length) {
     return <div className="gh-alert gh-alert-info" role="status">No properties yet.</div>;
@@ -16,11 +41,17 @@ function PropertyTable({ properties, onEdit, onDelete }) {
       <table className="gh-table">
         <thead>
           <tr>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Gender</th>
-            <th>Character Name</th>
-            <th>Last Modified</th>
+            {COLUMNS.map(({ label, field }) => (
+              <th
+                key={field}
+                style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
+                onClick={() => handleColumnClick(field)}
+                aria-sort={sortBy === field ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+              >
+                {label}
+                <SortIcon active={sortBy === field} dir={sortDir} />
+              </th>
+            ))}
             <th style={{ textAlign: 'center' }}>Actions</th>
           </tr>
         </thead>

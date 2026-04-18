@@ -2,17 +2,23 @@ const express = require('express');
 const router = express.Router();
 const Property = require('../models/Property');
 
-// GET /api/properties — list with pagination, sorted by updatedAt desc
+// GET /api/properties — list with pagination and optional sorting
+const SORTABLE_FIELDS = new Set(['firstName', 'lastName', 'gender', 'characterName', 'updatedAt', 'createdAt']);
+
 router.get('/', async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
     const limit = Math.max(1, parseInt(req.query.limit) || 10);
-    const skip = (page - 1) * limit;
+    const skip  = (page - 1) * limit;
+
+    const sortField = SORTABLE_FIELDS.has(req.query.sortBy) ? req.query.sortBy : 'updatedAt';
+    const sortDir   = req.query.sortDir === 'asc' ? 1 : -1;
+
     const [properties, total] = await Promise.all([
-      Property.find().sort({ updatedAt: -1 }).skip(skip).limit(limit),
+      Property.find().sort({ [sortField]: sortDir }).skip(skip).limit(limit),
       Property.countDocuments(),
     ]);
-    res.json({ properties, total, page, limit });
+    res.json({ properties, total, page, limit, sortBy: sortField, sortDir: sortDir === 1 ? 'asc' : 'desc' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -10,12 +10,14 @@ function App() {
   const [properties, setProperties] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState('updatedAt');
+  const [sortDir, setSortDir] = useState('desc');
   const [selected, setSelected] = useState(null);
   const [error, setError] = useState(null);
 
-  const load = useCallback(async (p = page) => {
+  const load = useCallback(async (p = page, sb = sortBy, sd = sortDir) => {
     try {
-      const data = await api.getAll({ page: p, limit: PAGE_SIZE });
+      const data = await api.getAll({ page: p, limit: PAGE_SIZE, sortBy: sb, sortDir: sd });
       // handle both paginated response and legacy plain array
       if (Array.isArray(data)) {
         setProperties(data);
@@ -28,14 +30,20 @@ function App() {
     } catch (e) {
       setError(e.message);
     }
-  }, [page]);
+  }, [page, sortBy, sortDir]);
 
   useEffect(() => {
     if (view === 'list') load(page);
   }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePageChange = (newPage) => {
-    load(newPage);
+    load(newPage, sortBy, sortDir);
+  };
+
+  const handleSortChange = (field, dir) => {
+    setSortBy(field);
+    setSortDir(dir);
+    load(1, field, dir);
   };
 
   const handleEdit = (property) => {
@@ -122,9 +130,12 @@ function App() {
             total={total}
             page={page}
             limit={PAGE_SIZE}
+            sortBy={sortBy}
+            sortDir={sortDir}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onPageChange={handlePageChange}
+            onSortChange={handleSortChange}
           />
         )}
       </main>
