@@ -122,6 +122,170 @@ function deepEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+function isEmptyValue(value) {
+  return value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
+}
+
+function validateScalarValue(value, schema, label) {
+  const errors = [];
+
+  if (schema.enum && !schema.enum.includes(value)) {
+    errors.push(`${label} must be one of the allowed values.`);
+  }
+
+  if (schema.type === 'string') {
+    if (typeof value !== 'string') {
+      errors.push(`${label} must be a string.`);
+      return errors;
+    }
+    if (schema.minLength !== undefined && value.length < schema.minLength) {
+      errors.push(`${label} is required.`);
+    }
+    if (schema.pattern) {
+      const regex = new RegExp(schema.pattern);
+      if (!regex.test(value)) {
+        errors.push(`${label} is invalid.`);
+      }
+    }
+    return errors;
+  }
+
+  if (schema.type === 'integer' || schema.type === 'number') {
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+      errors.push(`${label} is required.`);
+      return errors;
+    }
+    if (schema.type === 'integer' && !Number.isInteger(value)) {
+      errors.push(`${label} must be a whole number.`);
+    }
+    if (schema.minimum !== undefined && value < schema.minimum) {
+      errors.push(`${label} must be at least ${schema.minimum}.`);
+    }
+    if (schema.maximum !== undefined && value > schema.maximum) {
+      errors.push(`${label} must be at most ${schema.maximum}.`);
+    }
+    return errors;
+  }
+
+  if (schema.type === 'boolean' && typeof value !== 'boolean') {
+    errors.push(`${label} is required.`);
+  }
+
+  return errors;
+}
+
+function validateDataAgainstSchema(data, schema, contextSchema, pathLabel = schema?.title ?? 'Form') {
+  if (!schema || typeof schema !== 'object') return [];
+
+  const ctx = contextSchema ?? schema;
+  const errors = [];
+  const requiredSet = new Set(schema.required ?? []);
+
+  for (const [key, propDef] of Object.entries(schema.properties ?? {})) {
+    if (SYSTEM_FIELDS.has(key)) continue;
+
+    const label = propDef.title ?? propDef.properties?.title?.const ?? key;
+    const nextLabel = pathLabel ? `${pathLabel} > ${label}` : label;
+    const kind = classifyField(key, propDef);
+    const value = data?.[key];
+    const isRequired = requiredSet.has(key);
+
+    if (kind === 'array') {
+      if (!Array.isArray(value)) {
+        if (isRequired) errors.push(`${nextLabel} is required.`);
+        continue;
+      }
+      const itemSchema = resolveItemSchema(propDef, ctx);
+      value.forEach((item, index) => {
+        const itemLabel = `${nextLabel} ${index + 1}`;
+        if (itemSchema?.type === 'object') {
+          errors.push(...validateDataAgainstSchema(item, itemSchema, itemSchema?.$id ? itemSchema : ctx, itemLabel));
+        }
+      });
+      continue;
+    }
+
+    if (kind === 'title-value') {
+      const valueSchema = propDef.properties?.value;
+      const actualValue = value?.value;
+      if (isRequired && isEmptyValue(actualValue)) {
+        errors.push(`${nextLabel} is required.`);
+        continue;
+      }
+      if (!isEmptyValue(actualValue)) {
+        errors.push(...validateScalarValue(actualValue, valueSchema, nextLabel));
+      }
+      continue;
+    }
+
+    if (kind === 'boolean') {
+      if (isRequired && typeof value !== 'boolean') {
+        errors.push(`${nextLabel} is required.`);
+      }
+      continue;
+    }
+
+    if (isRequired && isEmptyValue(value)) {
+      errors.push(`${nextLabel} is required.`);
+      continue;
+    }
+
+    if (!isEmptyValue(value)) {
+      errors.push(...validateScalarValue(value, propDef, nextLabel));
+    }
+  }
+
+  return errors;
+}
+
+function validateField(propDef, value, isRequired, label, contextSchema) {
+  const kind = classifyField(label, propDef);
+
+  if (kind === 'array') {
+    if (isRequired && !Array.isArray(value)) return [`${label} is required.`];
+    return [];
+  }
+
+  if (kind === 'title-value') {
+    const actualValue = value?.value;
+    const valueSchema = propDef.properties?.value;
+    if (isRequired && isEmptyValue(actualValue)) return [`${label} is required.`];
+    return isEmptyValue(actualValue) ? [] : validateScalarValue(actualValue, valueSchema, label);
+  }
+
+  if (kind === 'boolean') {
+    if (isRequired && typeof value !== 'boolean') return [`${label} is required.`];
+    return [];
+  }
+
+  if (isRequired && isEmptyValue(value)) return [`${label} is required.`];
+  return isEmptyValue(value) ? [] : validateScalarValue(value, propDef, label, contextSchema);
+}
+
+function getFieldErrors(data, schema, contextSchema) {
+  const errorsByField = {};
+  const requiredSet = new Set(schema?.required ?? []);
+
+  for (const [key, propDef] of Object.entries(schema?.properties ?? {})) {
+    if (SYSTEM_FIELDS.has(key)) continue;
+    const label = propDef.title ?? propDef.properties?.title?.const ?? key;
+    const fieldErrors = validateField(propDef, data?.[key], requiredSet.has(key), label, contextSchema);
+    if (fieldErrors.length > 0) {
+      errorsByField[key] = fieldErrors;
+    }
+  }
+
+  return errorsByField;
+}
+
+function getFieldPathKey(path, key) {
+  return [...path, key].join('.');
+}
+
+function getNavigationButtonClassName(isRoot) {
+  return isRoot ? 'property-form-back-button property-form-back-button--disabled' : 'property-form-back-button';
+}
+
 /**
  * Inverse of normalizeFromDb. Walks the data against a schema and unwraps
  * { title, value } objects back to plain scalar values so the server's flat
@@ -210,20 +374,24 @@ function setAtPath(obj, path, value) {
  * Handles: boolean toggle, scalar enum (Select), scalar text/number (Input),
  * and the custom title-value pattern.
  */
-function SchemaField({ fieldKey, propDef, value, onChange, isRequired }) {
+function SchemaField({ fieldKey, propDef, value, onChange, onBlur, isRequired, errors = [] }) {
   const kind = classifyField(fieldKey, propDef);
+  const hasError = errors.length > 0;
+  const errorText = errors[0];
 
   // ── Boolean ────────────────────────────────────────────────────────────────
   if (kind === 'boolean') {
     return (
-      <Form.Field required={isRequired}>
+      <Form.Field required={isRequired} error={hasError}>
         <label>{propDef.title ?? fieldKey}</label>
         <Checkbox
           toggle
           label={value ? 'Yes' : 'No'}
           checked={!!value}
+          onBlur={onBlur}
           onChange={(_, { checked }) => onChange(checked)}
         />
+        {hasError && <div className="property-form-field-error">{errorText}</div>}
       </Form.Field>
     );
   }
@@ -234,21 +402,23 @@ function SchemaField({ fieldKey, propDef, value, onChange, isRequired }) {
     if (propDef.enum) {
       const opts = propDef.enum.map((v) => ({ key: String(v), text: String(v), value: v }));
       return (
-        <Form.Field required={isRequired}>
+        <Form.Field required={isRequired} error={hasError}>
           <label>{label}</label>
           <Select
             fluid
             options={opts}
             value={value ?? opts[0]?.value}
+            onBlur={onBlur}
             onChange={(_, { value: v }) => onChange(v)}
             placeholder={`Select ${label}`}
           />
+          {hasError && <div className="property-form-field-error">{errorText}</div>}
         </Form.Field>
       );
     }
     const isNum = propDef.type === 'integer' || propDef.type === 'number';
     return (
-      <Form.Field required={isRequired}>
+      <Form.Field required={isRequired} error={hasError}>
         <label>{label}</label>
         <Input
           fluid
@@ -257,8 +427,11 @@ function SchemaField({ fieldKey, propDef, value, onChange, isRequired }) {
           min={propDef.minimum}
           max={propDef.maximum}
           placeholder={label}
+          error={hasError}
+          onBlur={onBlur}
           onChange={(e) => onChange(isNum ? Number(e.target.value) : e.target.value)}
         />
+        {hasError && <div className="property-form-field-error">{errorText}</div>}
       </Form.Field>
     );
   }
@@ -273,22 +446,24 @@ function SchemaField({ fieldKey, propDef, value, onChange, isRequired }) {
     if (valSchema.enum) {
       const opts = valSchema.enum.map((v) => ({ key: String(v), text: String(v), value: v }));
       return (
-        <Form.Field required={isRequired}>
+        <Form.Field required={isRequired} error={hasError}>
           <label>{label}</label>
           <Select
             fluid
             options={opts}
             value={currentVal}
+            onBlur={onBlur}
             onChange={(_, { value: v }) => onChange({ title: titleConst, value: v })}
             placeholder={`Select ${label}`}
           />
+          {hasError && <div className="property-form-field-error">{errorText}</div>}
         </Form.Field>
       );
     }
 
     const isNum = valSchema.type === 'integer' || valSchema.type === 'number';
     return (
-      <Form.Field required={isRequired}>
+      <Form.Field required={isRequired} error={hasError}>
         <label>{label}</label>
         <Input
           fluid
@@ -297,11 +472,14 @@ function SchemaField({ fieldKey, propDef, value, onChange, isRequired }) {
           min={valSchema.minimum}
           max={valSchema.maximum}
           placeholder={label}
+          error={hasError}
+          onBlur={onBlur}
           onChange={(e) => {
             const raw = e.target.value;
             onChange({ title: titleConst, value: isNum ? Number(raw) : raw });
           }}
         />
+        {hasError && <div className="property-form-field-error">{errorText}</div>}
       </Form.Field>
     );
   }
@@ -341,6 +519,8 @@ function PropertyForm({ selected, onSave, onCancel }) {
   const [rootData,    setRootData]    = useState(makeEmpty);
   const [navStack,    setNavStack]    = useState(() => { const d = makeEmpty(); return [rootEntry(d)]; });
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [touchedFields, setTouchedFields] = useState({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   // Load selected record
   useEffect(() => {
@@ -348,11 +528,17 @@ function PropertyForm({ selected, onSave, onCancel }) {
     const initial = selected ? normalizeFromDb(raw, propertySchema, propertySchema) : raw;
     setRootData(initial);
     setNavStack([rootEntry(initial)]);
+    setTouchedFields({});
+    setSubmitAttempted(false);
   }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const current = navStack[navStack.length - 1];
   const isRoot  = navStack.length === 1;
   const currentData = getAtPath(rootData, current.dataPath);
+  const validationErrors = validateDataAgainstSchema(rootData, propertySchema, propertySchema);
+  const currentFieldErrors = current.isArray
+    ? {}
+    : getFieldErrors(currentData, current.schema, current.contextSchema);
 
   const isDirty = current.promptOnBack && current.snapshotOnEnter != null
     ? !deepEqual(currentData, current.snapshotOnEnter)
@@ -460,13 +646,34 @@ function PropertyForm({ selected, onSave, onCancel }) {
     setRootData((d) => setAtPath(d, [...current.dataPath, key], value));
   };
 
+  const handleFieldBlur = (key) => {
+    const pathKey = getFieldPathKey(current.dataPath, key);
+    setTouchedFields((prev) => (prev[pathKey] ? prev : { ...prev, [pathKey]: true }));
+  };
+
+  const markCurrentFieldsTouched = () => {
+    const nextTouched = {};
+    for (const key of Object.keys(current.schema?.properties ?? {})) {
+      if (SYSTEM_FIELDS.has(key)) continue;
+      nextTouched[getFieldPathKey(current.dataPath, key)] = true;
+    }
+    setTouchedFields((prev) => ({ ...prev, ...nextTouched }));
+  };
+
   // Global save — always saves the full rootData regardless of current nav level
   const handleGlobalSave = async () => {
+    setSubmitAttempted(true);
+    if (validationErrors.length > 0) {
+      markCurrentFieldsTouched();
+      return;
+    }
     const empty   = makeEmpty();
     const payload = flattenForApi(rootData, propertySchema, propertySchema);
     await onSave(payload);
     setRootData(empty);
     setNavStack([rootEntry(empty)]);
+    setTouchedFields({});
+    setSubmitAttempted(false);
   };
 
   // Global cancel/clear — same action: reset and close
@@ -474,6 +681,8 @@ function PropertyForm({ selected, onSave, onCancel }) {
     const empty = makeEmpty();
     setRootData(empty);
     setNavStack([rootEntry(empty)]);
+    setTouchedFields({});
+    setSubmitAttempted(false);
     onCancel();
   };
 
@@ -501,12 +710,14 @@ function PropertyForm({ selected, onSave, onCancel }) {
             propDef={propDef}
             value={currentData?.[key]}
             onChange={(val) => handleFieldChange(key, val)}
+            onBlur={() => handleFieldBlur(key)}
             isRequired={requiredSet.has(key)}
+            errors={submitAttempted || touchedFields[getFieldPathKey(current.dataPath, key)] ? (currentFieldErrors[key] ?? []) : []}
           />
         ))}
 
         {arrayNavs.length > 0 && (
-          <div style={{ marginTop: '1.25rem' }}>
+          <div className="property-form-array-nav-list">
             {arrayNavs.map(({ key, propDef }) => {
               const iSchema = resolveItemSchema(propDef, current.contextSchema);
               const label   = propDef.title ?? iSchema?.title ?? key;
@@ -514,21 +725,16 @@ function PropertyForm({ selected, onSave, onCancel }) {
               return (
                 <div
                   key={key}
+                  className="property-form-array-nav"
                   role="button"
                   tabIndex={0}
                   onClick={() => handleNavigateIntoArray(key, propDef)}
                   onKeyDown={(e) => e.key === 'Enter' && handleNavigateIntoArray(key, propDef)}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '0.7rem 1rem', marginBottom: '0.5rem',
-                    border: '1px solid rgba(34,36,38,.15)', borderRadius: '4px',
-                    cursor: 'pointer', background: '#f9fafb', userSelect: 'none',
-                  }}
                 >
-                  <span style={{ fontWeight: 600 }}>{label}</span>
+                  <span className="property-form-array-nav-label">{label}</span>
                   <span>
                     <Label circular size="small">{count}</Label>
-                    <Icon name="chevron right" style={{ marginLeft: '0.5rem', color: '#888' }} />
+                    <Icon name="chevron right" className="property-form-array-nav-icon" />
                   </span>
                 </div>
               );
@@ -546,7 +752,7 @@ function PropertyForm({ selected, onSave, onCancel }) {
     const iSchema = resolveItemSchema(current.schema, current.contextSchema);
     const arr     = Array.isArray(currentData) ? currentData : [];
     const addBtn  = (
-      <Button primary size="small" icon labelPosition="left" onClick={handleAddItem} style={{ marginTop: '0.75rem' }}>
+      <Button primary size="small" icon labelPosition="left" onClick={handleAddItem} className="property-form-add-button">
         <Icon name="plus" />
         Add {iSchema?.title ?? 'Item'}
       </Button>
@@ -568,13 +774,13 @@ function PropertyForm({ selected, onSave, onCancel }) {
             {arr.map((item, i) => (
               <Table.Row
                 key={i}
-                style={{ cursor: 'pointer' }}
+                className="property-form-array-row"
                 onClick={() => handleNavigateToItem(i)}
               >
                 <Table.Cell>
                   <strong>{itemDisplayLabel(item, iSchema, i)}</strong>
                   {item?.isDefault && (
-                    <Label size="tiny" color="blue" style={{ marginLeft: '0.5rem' }}>Default</Label>
+                    <Label size="tiny" color="blue" className="property-form-default-label">Default</Label>
                   )}
                 </Table.Cell>
                 <Table.Cell collapsing onClick={(e) => e.stopPropagation()}>
@@ -599,7 +805,7 @@ function PropertyForm({ selected, onSave, onCancel }) {
   return (
     <Segment>
       {/* Navigation header */}
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', gap: '0.75rem' }}>
+      <div className="property-form-header">
         <Button
           icon="arrow left"
           size="small"
@@ -607,12 +813,12 @@ function PropertyForm({ selected, onSave, onCancel }) {
           disabled={isRoot}
           title="Go back"
           onClick={handleBack}
-          style={{ opacity: isRoot ? 0.25 : 1, pointerEvents: isRoot ? 'none' : 'auto' }}
+          className={getNavigationButtonClassName(isRoot)}
         />
         <div>
-          <Header as="h3" style={{ margin: 0 }}>{current.label}</Header>
+          <Header as="h3" className="property-form-title">{current.label}</Header>
           {navStack.length > 1 && (
-            <small style={{ color: '#999', fontSize: '0.8rem' }}>{breadcrumb}</small>
+            <small className="property-form-breadcrumb">{breadcrumb}</small>
           )}
         </div>
       </div>
@@ -621,7 +827,7 @@ function PropertyForm({ selected, onSave, onCancel }) {
       {current.isArray ? renderArrayManager() : renderObjectForm()}
 
       {/* Single global action footer */}
-      <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(34,36,38,.15)' }}>
+      <div className="property-form-footer">
         <Button primary onClick={handleGlobalSave}>
           {selected ? 'Update' : 'Create'}
         </Button>

@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Icon, Message, Table } from 'semantic-ui-react';
-
-const cellStyle = { cursor: 'pointer' };
-const textStyle = { cursor: 'text', display: 'inline' };
+import { Message } from 'semantic-ui-react';
 
 function PropertyTable({ properties, onEdit, onDelete }) {
   const [selectedId, setSelectedId] = useState(null);
@@ -16,51 +13,57 @@ function PropertyTable({ properties, onEdit, onDelete }) {
   };
 
   return (
-    <Table celled striped selectable>
-      <Table.Header>
-        <Table.Row>
-          <Table.HeaderCell>First Name</Table.HeaderCell>
-          <Table.HeaderCell>Last Name</Table.HeaderCell>
-          <Table.HeaderCell>Gender</Table.HeaderCell>
-          <Table.HeaderCell>Character Name</Table.HeaderCell>
-          <Table.HeaderCell>Last Modified</Table.HeaderCell>
-          <Table.HeaderCell textAlign="center">Actions</Table.HeaderCell>
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
+    <table className="property-table">
+      <thead className="property-table-head">
+        <tr>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Gender</th>
+          <th>Character Name</th>
+          <th>Last Modified</th>
+          <th className="property-table-actions-header">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
         {properties.map((p) => (
-          <Table.Row
+          <tr
             key={p.id}
-            active={selectedId === p.id}
+            aria-selected={selectedId === p.id}
             onClick={() => handleRowClick(p)}
-            style={{ cursor: 'pointer' }}
+            className={selectedId === p.id ? 'property-table-row property-table-row--active' : 'property-table-row'}
           >
-            <Table.Cell style={cellStyle}>
-              <span style={textStyle} onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.firstName}</span>
-            </Table.Cell>
-            <Table.Cell style={cellStyle}>
-              <span style={textStyle} onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.lastName}</span>
-            </Table.Cell>
-            <Table.Cell style={cellStyle}>
-              <span style={textStyle} onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.gender}</span>
-            </Table.Cell>
-            <Table.Cell style={cellStyle}>
-              <span style={textStyle} onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.characterName}</span>
-            </Table.Cell>
-            <Table.Cell style={{ ...cellStyle, whiteSpace: 'nowrap', color: '#888', fontSize: '0.85rem' }}>
-              <span style={textStyle} onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
+            <td className="property-table-cell">
+              <span className="property-table-edit-text" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.firstName}</span>
+            </td>
+            <td className="property-table-cell">
+              <span className="property-table-edit-text" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.lastName}</span>
+            </td>
+            <td className="property-table-cell">
+              <span className="property-table-edit-text" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.gender}</span>
+            </td>
+            <td className="property-table-cell">
+              <span className="property-table-edit-text" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>{p.characterName}</span>
+            </td>
+            <td className="property-table-cell property-table-cell--timestamp">
+              <span className="property-table-edit-text" onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
                 {p.updatedAt || p.createdAt ? new Date(p.updatedAt || p.createdAt).toLocaleString() : '—'}
               </span>
-            </Table.Cell>
-            <Table.Cell textAlign="center" onClick={(e) => e.stopPropagation()}>
-              <Button icon size="tiny" color="red" onClick={() => onDelete(p.id)} title="Delete">
-                <Icon name="trash" />
-              </Button>
-            </Table.Cell>
-          </Table.Row>
+            </td>
+            <td className="property-table-actions-cell" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="property-table-delete-button"
+                onClick={() => onDelete(p.id)}
+                aria-label={`Delete ${p.firstName} ${p.lastName}`.trim()}
+                title="Delete"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
         ))}
-      </Table.Body>
-    </Table>
+      </tbody>
+    </table>
   );
 }
 

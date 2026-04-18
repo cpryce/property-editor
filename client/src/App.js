@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Header, Menu, Message } from 'semantic-ui-react';
+import { Container, Menu, Message } from 'semantic-ui-react';
 import * as api from './api';
 import ListView from './components/ListView';
 import PropertyForm from './components/PropertyForm';
@@ -86,8 +86,7 @@ function App() {
         <Menu.Item active={view === 'new'} onClick={handleNavNew}>New</Menu.Item>
         <Menu.Item active={view === 'list'} onClick={handleNavList}>List</Menu.Item>
       </Menu>
-      <Container style={{ marginTop: '5rem', marginBottom: '2rem' }}>
-        <Header as="h1" dividing>Property Editor</Header>
+      <Container className="app-shell">
         {error && (
           <Message negative onDismiss={() => setError(null)}>
             <Message.Header>Error</Message.Header>

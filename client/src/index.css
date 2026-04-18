@@ -11,3 +11,156 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.app-shell {
+  margin-top: 5rem;
+  margin-bottom: 2rem;
+}
+
+.list-view-pagination {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.property-form-field-error {
+  color: #9f3a38;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.property-form-array-nav-list {
+  margin-top: 1.25rem;
+}
+
+.property-form-array-nav {
+  align-items: center;
+  background: #f9fafb;
+  border: 1px solid rgba(34, 36, 38, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding: 0.7rem 1rem;
+  user-select: none;
+}
+
+.property-form-array-nav-label {
+  font-weight: 600;
+}
+
+.property-form-array-nav-icon {
+  color: #888;
+  margin-left: 0.5rem;
+}
+
+.property-form-add-button {
+  margin-top: 0.75rem !important;
+}
+
+.property-form-array-row {
+  cursor: pointer;
+}
+
+.property-form-default-label {
+  margin-left: 0.5rem !important;
+}
+
+.property-form-header {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.property-form-back-button {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.property-form-back-button--disabled {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.property-form-title {
+  margin: 0 !important;
+}
+
+.property-form-breadcrumb {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.property-form-footer {
+  border-top: 1px solid rgba(34, 36, 38, 0.15);
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+}
+
+.property-table-row {
+  cursor: pointer;
+}
+
+.property-table-row--active {
+  background: rgba(33, 133, 208, 0.08);
+}
+
+.property-table {
+  border-collapse: collapse;
+  border: 1px solid rgba(34, 36, 38, 0.15);
+  border-radius: 0.28571429rem;
+  overflow: hidden;
+  width: 100%;
+}
+
+.property-table thead th {
+  background: #f9fafb;
+  border-bottom: 1px solid rgba(34, 36, 38, 0.1);
+  font-weight: 700;
+  padding: 0.78571429em;
+  text-align: left;
+}
+
+.property-table td {
+  border-top: 1px solid rgba(34, 36, 38, 0.1);
+  padding: 0.78571429em;
+  vertical-align: middle;
+}
+
+.property-table-actions-header,
+.property-table-actions-cell {
+  text-align: center;
+}
+
+.property-table-cell {
+  cursor: pointer;
+}
+
+.property-table-cell--timestamp {
+  color: #888;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.property-table-edit-text {
+  cursor: text;
+  display: inline;
+}
+
+.property-table-delete-button {
+  background: #db2828;
+  border: 1px solid transparent;
+  border-radius: 0.28571429rem;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.78571429rem;
+  line-height: 1;
+  padding: 0.65em 0.9em;
+}
+
+.property-table-delete-button:hover,
+.property-table-delete-button:focus-visible {
+  background: #c82323;
+  outline: none;
+}

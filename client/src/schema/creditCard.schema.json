@@ -67,9 +67,8 @@
       "properties": {
         "title": { "type": "string", "const": "Expiration Year" },
         "value": {
-          "type": "integer",
-          "minimum": 2000,
-          "maximum": 2100
+            "type": "string",
+            "enum": ["2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034", "2035", "2036"]
         }
       },
       "required": ["title", "value"],

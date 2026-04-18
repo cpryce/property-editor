@@ -13,7 +13,7 @@ function ListView({ properties, total, page, limit, onEdit, onDelete, onPageChan
         onDelete={onDelete}
       />
       {totalPages > 1 && (
-        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+        <div className="list-view-pagination">
           <Pagination
             activePage={page}
             totalPages={totalPages}

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.com/schemas/property.json",
-  "title": "Property",
+  "title": "User",
   "description": "A property record in the Property Editor application",
   "type": "object",
   "properties": {

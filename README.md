@@ -10,7 +10,7 @@ A full-stack CRUD web application for managing properties, built with Node.js/Ex
 - [Docker](https://www.docker.com) (for running MongoDB)
 
 ---
-
+so
 ## 1. Start MongoDB (Docker)
 
 ```bash
