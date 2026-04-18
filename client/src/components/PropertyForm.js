@@ -3,7 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -14,6 +13,7 @@ import {
   MenuItem,
   Paper,
   Stack,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -302,6 +302,13 @@ function getFieldPathKey(path, key) {
   return [...path, key].join('.');
 }
 
+function enforceSingleDefault(items, selectedIndex) {
+  return items.map((item, index) => ({
+    ...item,
+    isDefault: index === selectedIndex,
+  }));
+}
+
 /**
  * Inverse of normalizeFromDb. Walks the data against a schema and unwraps
  * { title, value } objects back to plain scalar values so the server's flat
@@ -397,18 +404,22 @@ function SchemaField({ fieldKey, propDef, value, onChange, onBlur, isRequired, e
 
   // ── Boolean ────────────────────────────────────────────────────────────────
   if (kind === 'boolean') {
+    const label = fieldKey === 'isDefault' ? 'Default' : (propDef.title ?? fieldKey);
     return (
-      <FormControlLabel
-        control={(
-          <Checkbox
+      <Box>
+        <FormControlLabel
+          control={(
+            <Switch
             checked={!!value}
             onBlur={onBlur}
             onChange={(e) => onChange(e.target.checked)}
-          />
-        )}
-        label={value ? 'Yes' : 'No'}
-        sx={{ alignItems: 'center', m: 0 }}
-      />
+            />
+          )}
+          label={label}
+          sx={{ alignItems: 'center', m: 0 }}
+        />
+        {hasError && <Typography variant="caption" color="error">{errorText}</Typography>}
+      </Box>
     );
   }
 
@@ -664,7 +675,16 @@ function PropertyForm({ selected, onSave, onCancel }) {
 
   // Field change at current object level
   const handleFieldChange = (key, value) => {
-    setRootData((d) => setAtPath(d, [...current.dataPath, key], value));
+    setRootData((d) => {
+      if (key === 'isDefault' && value === true && typeof current.dataPath[current.dataPath.length - 1] === 'number') {
+        const itemIndex = current.dataPath[current.dataPath.length - 1];
+        const parentPath = current.dataPath.slice(0, -1);
+        const siblings = getAtPath(d, parentPath) ?? [];
+        return setAtPath(d, parentPath, enforceSingleDefault(siblings, itemIndex));
+      }
+
+      return setAtPath(d, [...current.dataPath, key], value);
+    });
   };
 
   const handleFieldBlur = (key) => {
