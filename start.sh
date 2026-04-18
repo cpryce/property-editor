@@ -29,9 +29,15 @@ until curl -s http://localhost:3001/api/properties > /dev/null 2>&1; do
   sleep 1
 done
 
-echo "Server is up. Starting client..."
+echo "Server is up. Starting client (Vite)..."
 cd "$ROOT/client" && npm start &
 CLIENT_PID=$!
+
+echo "Waiting for client on port 5173..."
+until curl -s http://localhost:5173 > /dev/null 2>&1; do
+  sleep 1
+done
+echo "Client is up. Open http://localhost:5173"
 
 # On Ctrl+C, kill both processes
 trap "kill $SERVER_PID $CLIENT_PID 2>/dev/null; exit 0" INT TERM

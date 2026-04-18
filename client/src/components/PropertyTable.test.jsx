@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import PropertyTable from './PropertyTable';
 
 test('renders without React console warnings', () => {
-  const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
   render(
     <StrictMode>

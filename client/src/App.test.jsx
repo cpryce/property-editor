@@ -1,25 +1,24 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import App from './App';
 import PropertyForm from './components/PropertyForm';
+import * as api from './api';
 
-jest.mock('./api', () => ({
-  getAll: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  remove: jest.fn(),
+vi.mock('./api', () => ({
+  getAll: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  remove: vi.fn(),
 }));
 
-const api = require('./api');
-
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   api.getAll.mockResolvedValue({ properties: [], total: 0, page: 1, limit: 10 });
 });
 
 test('shows validation only after touch and blocks invalid save', async () => {
-  const onSave = jest.fn().mockResolvedValue(undefined);
-  const onCancel = jest.fn();
-  const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const onSave = vi.fn().mockResolvedValue(undefined);
+  const onCancel = vi.fn();
+  const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
   render(
     <PropertyForm
@@ -70,7 +69,7 @@ test('shows validation only after touch and blocks invalid save', async () => {
 });
 
 test('only keeps one default item selected per collection', async () => {
-  const onSave = jest.fn().mockResolvedValue(undefined);
+  const onSave = vi.fn().mockResolvedValue(undefined);
 
   render(
     <PropertyForm
@@ -130,12 +129,12 @@ test('only keeps one default item selected per collection', async () => {
 });
 
 test('root back button returns to table view', () => {
-  const onCancel = jest.fn();
+  const onCancel = vi.fn();
 
   render(
     <PropertyForm
       selected={null}
-      onSave={jest.fn()}
+      onSave={vi.fn()}
       onCancel={onCancel}
     />
   );
